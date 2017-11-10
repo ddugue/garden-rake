@@ -8,7 +8,7 @@ Gem::Specification.new do |s|
                   ' necessary'
   s.authors     = ['David Dugue']
   s.email       = 'ddugue@kumoweb.ca'
-  s.files       = ["libs/rake-garden.rb"]
+  s.files       = ["lib/rake/garden.rb"]
   s.homepage    = 'http://rubygems.org/gems/rake-garden'
   s.license     = 'MIT'
 end

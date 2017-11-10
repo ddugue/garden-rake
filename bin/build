@@ -2,3 +2,4 @@
 
 set -e
 gem build rake-garden.gemspec
+gem install ./rake-garden-0.0.1.gem
