@@ -3,7 +3,6 @@ module Rake::Garden
 
   class Executor
     def initialize(command)
-      @logger = Logger.instance
       @metadata = Metadata.instance
       @command = command
 
@@ -52,9 +51,9 @@ module Rake::Garden
     end
 
     def execute()
-      @logger.start
+      logger = Logger.new
 
-      return log "Skipped #{@command}" if !execute?
+      return logger.log "Skipped #{@command}" if !execute?
       close = watch
       system @command
       close.call
@@ -63,7 +62,7 @@ module Rake::Garden
       @metadata[@command]["dependencies"] = @dependencies.to_a
       @metadata[@command]["outputs"] = @outputs.to_a
 
-      return log "Executed #{@command}"
+      return logger.log "Executed #{@command}"
     end
   end
 end

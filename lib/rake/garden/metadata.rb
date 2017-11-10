@@ -20,21 +20,23 @@ module Rake::Garden
 
     # Load the Message pack (or JSON file) and returns metadata
     def load()
-      Logger.instance.start
+      logger = Logger.new
       file = File.file?(filename) ? File.read(filename) : nil
       return Hash.new if file.nil?
       return JSON.load file if json?
       return MessagePack.unpack file
     ensure
-      log "Load metadata #{filename}"
+      if (logger != nil)
+        logger.log "Load metadata #{filename}"
+      end
     end
 
     # Save the Metadata information to the filename
     def save()
-      Logger.instance.start
+      logger = Logger.new
       File.open filename, "w+" do |file|
         json? ? JSON.dump(data, file) : MessagePack.dump(data, file)
-        log "Saved metadata #{filename}"
+        logger.log "Saved metadata #{filename}"
       end
     end
   end

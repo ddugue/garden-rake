@@ -14,7 +14,6 @@ require_relative './garden/execute.rb'
 module Rake::Garden
 
   # Shortcut functions
-  def log(text); Logger.instance.log(text); end
   def execute(command)
     exec = Executor.new(command)
     exec.execute()

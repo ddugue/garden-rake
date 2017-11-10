@@ -1,26 +1,29 @@
 
 module Rake::Garden
+  ##
+  # Logging class that enables the user to time an execution
+  # start: Time object that represent the start of a program (normally rake)
+  # verbose: Wether to output message or not. Default use ENV["VERBOSE"] or True
+  ##
   class Logger
-    include Singleton
-    def initialize
-      @start = Time.now
+    @@start = Time.now
+
+    def initialize(start=nil, verbose=nil)
+      @verbose = verbose || (ENV.fetch('VERBOSE', 'true') == 'true')
+      @absolute_start = start || @@start # Start of the program
+      @start = Time.now                  # Start of the current execution
     end
 
-    def verbose?; ENV.fetch("VERBOSE", "true") == "true"; end
-
+    # Function responsible to render a time either in ms or sec
     def render_time(time)
       time < 1 ? "#{(time * 1000).round(2)}ms" : "#{time.round(2)}s"
     end
 
-    # Start a timer
-    def start(); @time = Time.now; end
-    def stop(); @time = nil; end
-
-    # Log time since start on top of total time
+    # Puts text since the start of the execution
     def log(text)
-      if verbose?
-        exec_time = render_time(@start.nil? ? 0 : Time.now - @time)
-        total_time = render_time(Time.now - @start)
+      if @verbose
+        exec_time = render_time(Time.now - @start)
+        total_time = render_time(Time.now - @absolute_start)
         puts "[#{exec_time} / #{total_time}] #{text}"
       end
     end
