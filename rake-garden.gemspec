@@ -1,3 +1,4 @@
+
 Gem::Specification.new do |s|
   s.name        = 'rake-garden'
   s.version     = '0.0.1'
@@ -8,7 +9,8 @@ Gem::Specification.new do |s|
                   ' necessary'
   s.authors     = ['David Dugue']
   s.email       = 'ddugue@kumoweb.ca'
-  s.files       = ["lib/rake/garden.rb"]
+  s.files       = ["lib/rake/garden.rb", "lib/rake/garden/logger.rb",
+                   "lib/rake/garden/execute.rb", "lib/rake/garden/metadata.rb"]
   s.homepage    = 'http://rubygems.org/gems/rake-garden'
   s.license     = 'MIT'
 end
