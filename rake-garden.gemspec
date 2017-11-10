@@ -13,4 +13,8 @@ Gem::Specification.new do |s|
                    "lib/rake/garden/execute.rb", "lib/rake/garden/metadata.rb"]
   s.homepage    = 'http://rubygems.org/gems/rake-garden'
   s.license     = 'MIT'
+  # Dependencies
+  s.add_runtime_dependency "msgpack", "~> 1.1", ">= 1.1.0"
+  s.add_runtime_dependency "rb-inotify", "~> 0.9",  ">= 0.9.10"
+
 end
