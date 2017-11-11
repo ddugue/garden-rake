@@ -1,6 +1,11 @@
 
 module Rake::Garden
-
+  DEBUG = ENV.fetch("DEBUG", "true") == "true"
+  if DEBUG
+    require 'json'
+  else
+    require 'msgpack'
+  end
   class Metadata
     include Singleton
     # Returns wether we use a JSON file (debug mode) or a msgpack file

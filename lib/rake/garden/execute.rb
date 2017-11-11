@@ -1,11 +1,79 @@
 
 module Rake::Garden
+  class Watcher
+    include Singleton
+    def initialize
+      @file_events = Hash.new
+      @glob_events = Hash.new
+
+      @thread = nil
+      @notifier = INotify::Notifier.new
+    end
+
+    def watch(glob, type)
+      # We make sure that this glob pattern is registered in the event observers
+      @glob_events[glob] = @glob_events.fetch(glob, Hash.new)
+      @glob_events[glob][type] = Set.new
+
+      folders = Dir.glob(glob).select { |fn| File.directory?(fn) }
+      folders.each do |f|
+        if @file_events.key? f
+          @file_events[f][type].add(glob)
+        else
+          @file_events[f] = Hash.new
+          @file_events[f][:accessed] = Set.new
+          @file_events[f][:modified] = Set.new
+          @file_events[f][type].add(glob)
+          @notifier.watch(f, :access, :create, :modify, :recursive) do |event|
+            if event.flags.include? :access
+              @file_events[f][:accessed].each do |glob|
+                @glob_events[glob][:accessed].add(event.absolute_name)
+              end
+            else
+              @file_events[f][:modified].each do |glob|
+                @glob_events[glob][:modified].add(event.absolute_name)
+              end
+            end
+          end
+        end
+      end
+    end
+
+    def start
+      @thread ||= Thread.new do
+        @notifier.run
+      end
+    end
+
+    def pause
+      @notifer.stop
+    end
+
+    def close
+      if !@thread.nil?
+        @thread.exit
+      end
+      @thread = nil
+      @notifier.close
+    end
+
+    # Return access files
+    def accessed(glob)
+      @glob_events[glob][:accessed]
+    end
+
+    def modified(glob)
+      @glob_events[glob][:modified]
+    end
+  end
 
   class Executor
-    def initialize(command)
+    def initialize(command, src_dir=nil, out_dir=nil)
       @metadata = Metadata.instance
+      @watcher = Watcher.instance
       @command = command
 
+      @src_dir = src_dir || Dir
       @dependencies = Set.new
       @outputs = Set.new
     end
@@ -29,40 +97,22 @@ module Rake::Garden
       [Dir.pwd]
     end
 
-    # Asynchronously watch for files
-    def watch
-      notifier = INotify::Notifier.new
-      thr = Thread.new do
-        directories.each do |directory|
-          notifier.watch(directory, :access, :create, :modify, :recursive) do |event|
-            if event.flags.include? :access
-              @dependencies.add event.absolute_name
-            else
-              @outputs.add event.absolute_name
-            end
-          end
-        end
-        notifier.run
-      end
-      return (lambda do
-                thr.exit
-                notifier.close
-              end)
-    end
-
     def execute()
       logger = Logger.new
 
       return logger.log "Skipped #{@command}" if !execute?
-      close = watch
+      @watcher.watch ".", :accessed
+      @watcher.watch ".", :modified
+      @watcher.start
       system @command
-      close.call
 
       @metadata[@command] = @metadata.fetch(@command, Hash.new)
-      @metadata[@command]["dependencies"] = @dependencies.to_a
-      @metadata[@command]["outputs"] = @outputs.to_a
+      @metadata[@command]["dependencies"] = @watcher.accessed(".").to_a
+      @metadata[@command]["outputs"] = @watcher.modified(".").to_a
 
       return logger.log "Executed #{@command}"
     end
   end
+
+  at_exit { Watcher.instance.close() }
 end
