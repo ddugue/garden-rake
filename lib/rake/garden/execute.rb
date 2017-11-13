@@ -1,104 +1,111 @@
+DEBUG = ENV.fetch("DEBUG", "false") == "true"
+$excluded_directories ||= Set.new [".git", "node_modules"]
 
 module Rake::Garden
   require 'find'
+  class FolderTree
+    include Singleton
+    def initialize()
+      @folders = Hash.new { |h, k| h[k] = Set.new }
+      @exclude = $excluded_directories
+      @hooks = Hash.new { |h, k| h[k] = Set.new }
+    end
+
+    def hook(folder)
+      if !@hooks.include? folder
+        # We use find to easily exclude some folders
+        Find.find(folder) do |path|
+          next unless File.directory? path
+          if @exclude.include? File.basename(path)
+            Find.prune
+            next
+          end
+          abs_path = File.expand_path(folder, path)
+          @folders[abs_path].add(folder)
+          @hooks[folder].add(abs_path)
+        end
+      end
+      return @hooks[folder]
+    end
+
+    ##
+    # Return the hooked parents folder of this file
+    def parents(file)
+      @folders[File.dirname(file)]
+    end
+
+  end
+
   class Watcher
     include Singleton
     def initialize
-      @file_events = Hash.new
-      @glob_events = Hash.new
+      @folder_tree = FolderTree.instance
 
-      @thread = nil
       @notifier = INotify::Notifier.new
-      @mutex = Mutex.new
+
+      @glob_events = Hash.new { |h, k| h[k] = {:accessed => Set.new, :modified => Set.new}}
+      @watchers = Set.new
     end
 
-    def watch(root_folders, type, ignore_directories=nil)
-      # We make sure that this glob pattern is registered in the event observers
-      ignored_directories = ignore_directories || Set.new
-      # TODO: Split in smaller functions
+    def add_watcher(path)
+      # Crawl folder tree
+      paths = @folder_tree.hook path
 
-      root_folders.each do |folder|
+      # Append watcher so we can keep track of active watchers
+      paths.each do |path|
+        next if @watchers.include? path
+        @watchers.add path
 
-        @mutex.synchronize do
-          @glob_events[folder] = @glob_events.fetch(folder, Hash.new)
-          @glob_events[folder][type] = Set.new
-        end
-        Find.find(folder) do |path|
-          if File.directory? path
-            if ignored_directories.include? File.basename(path)
-              Find.prune
-              next
+        # Append watch to notifier
+        @notifier.watch(path, :access, :create, :modify) do |event|
+          if event.flags.include? :access
+            if !File.directory? event.absolute_name
+              @folder_tree.parents(event.absolute_name).each do |glob|
+                @glob_events[glob][:accessed].add(event.absolute_name)
+              end
             end
-
-            if @file_events.key? path
-              @mutex.synchronize do
-                @file_events[path][type].add(folder)
-              end
-            else
-              @mutex.synchronize do
-                @file_events[path] = Hash.new
-                @file_events[path][:accessed] = Set.new
-                @file_events[path][:modified] = Set.new
-                @file_events[path][type].add(folder)
-              end
-              @notifier.watch(path, :access, :create, :modify) do |event|
-                if event.flags.include? :access
-                    if !File.directory? event.absolute_name
-                      puts "Event #{event.absolute_name}"
-                      @mutex.synchronize do
-                        @file_events[path][:accessed].each do |glob|
-                          @glob_events[glob][:accessed].add(event.absolute_name)
-                        end
-                      end
-                    end
-                else
-                  puts "Event #{event.absolute_name}"
-                  @mutex.synchronize do
-                    @file_events[path][:modified].each do |glob|
-                      @glob_events[glob][:modified].add(event.absolute_name)
-                    end
-                  end
-                end
-              end
+          else
+            @folder_tree.parents(event.absolute_name).each do |glob|
+              @glob_events[glob][:modified].add(event.absolute_name)
             end
           end
         end
       end
     end
 
-    def start
-      @thread ||= Thread.new do
-        @notifier.run
+    def execute(cmd, accessed_folders, modified_folders)
+      #We add watcher and clean up old events
+      logger = Logger.new
+      accessed_folders.each do |folder|
+        add_watcher folder
+        @glob_events[folder][:accessed].clear
       end
+
+      modified_folders.each do |folder|
+        add_watcher folder
+        @glob_events[folder][:modified].clear
+      end
+
+      if IO.select([@notifier.to_io], [], [], 0)
+        @notifier.process
+      end
+
+      system cmd
+
+      if IO.select([@notifier.to_io], [], [], 0)
+        @notifier.process
+      end
+
+      accessed_result = accessed_folders.reduce(Set.new) { |set, folder| @glob_events[folder][:accessed] + set}
+      modified_result = modified_folders.reduce(Set.new) { |set, folder| @glob_events[folder][:modified] + set}
+      return {
+        :accessed => accessed_result,
+        :modified => modified_result
+      }
     end
 
-    def pause
-      if !@thread.nil?
-        @thread.exit
-      end
-      @thread = nil
-      @notifier.stop
-    end
-
-    def close
-      if !@thread.nil?
-        @thread.exit
-      end
-      @thread = nil
+    def close()
       @notifier.close
-    end
-
-    # Return access files
-    def accessed(folders)
-      @mutex.synchronize do
-        folders.reduce(Set.new) { |set, folder| @glob_events[folder][:accessed] + set }
-      end
-    end
-
-    def modified(folders)
-      @mutex.synchronize do
-        folders.reduce(Set.new) { |set, folder| @glob_events[folder][:modified] + set }
-      end
     end
   end
 
@@ -127,30 +134,21 @@ module Rake::Garden
       return true
     end
 
-    # Return directories to watch when calling this task
-    def directories()
-      [Dir.pwd]
-    end
-
     def execute()
       logger = Logger.new
 
       return logger.log "Skipped #{@command}" if !execute?
-      @watcher.watch ["."], :accessed, Set.new([".git"])
-      @watcher.watch ["."], :modified, Set.new([".git"])
-      logger.log "Finished watching"
-      @watcher.start
 
-      system @command
-      @watcher.pause
-
+      dependencies = Set.new
+      outputs = Set.new
+      data = @watcher.execute @command, ["."], ["."]
       @metadata[@command] = @metadata.fetch(@command, Hash.new)
-      @metadata[@command]["dependencies"] = @watcher.accessed(["."]).to_a
-      @metadata[@command]["outputs"] = @watcher.modified(["."]).to_a
+      @metadata[@command]["dependencies"] = data[:accessed].to_a
+      @metadata[@command]["outputs"] = data[:modified].to_a
 
       return logger.log "Executed #{@command}"
     end
   end
 
-  # at_exit { Watcher.instance.close() }
+  at_exit { Watcher.instance.close() }
 end

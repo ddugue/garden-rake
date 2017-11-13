@@ -38,6 +38,7 @@ module Rake::Garden
 
     # Save the Metadata information to the filename
     def save()
+      return if data.nil?
       logger = Logger.new
       File.open filename, "w+" do |file|
         json? ? JSON.dump(data, file) : MessagePack.dump(data, file)
