@@ -1,6 +1,5 @@
 
 module Rake::Garden
-  DEBUG = ENV.fetch("DEBUG", "false") == "true"
   if DEBUG
     require 'json'
   else

@@ -1,4 +1,3 @@
-DEBUG = ENV.fetch("DEBUG", "false") == "true"
 $excluded_directories ||= Set.new [".git", "node_modules"]
 
 module Rake::Garden
