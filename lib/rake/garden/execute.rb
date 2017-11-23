@@ -1,3 +1,4 @@
+require 'rb-inotify'
 $excluded_directories ||= Set.new [".git", "node_modules"]
 
 module Rake::Garden
@@ -89,10 +90,15 @@ module Rake::Garden
         @notifier.process
       end
 
-      system cmd
+      result = system cmd
 
       if IO.select([@notifier.to_io], [], [], 0)
         @notifier.process
+      end
+
+      if !result
+        puts "There was an error executing #{cmd}"
+        exit 1
       end
 
       accessed_result = accessed_folders.reduce(Set.new) { |set, folder| @glob_events[folder][:accessed] + set}
@@ -115,8 +121,7 @@ module Rake::Garden
       @command = command
 
       @src_dir = src_dir || Dir
-      @dependencies = Set.new
-      @outputs = Set.new
+      @out_dir = out_dir || Dir
     end
 
     def time_of_file(f); File.mtime(f).to_i if File.file? f; end
@@ -138,8 +143,6 @@ module Rake::Garden
 
       return logger.log "Skipped #{@command}" if !execute?
 
-      dependencies = Set.new
-      outputs = Set.new
       data = @watcher.execute @command, ["."], ["."]
       @metadata[@command] = @metadata.fetch(@command, Hash.new)
       @metadata[@command]["dependencies"] = data[:accessed].to_a

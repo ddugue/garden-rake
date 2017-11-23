@@ -1,12 +1,6 @@
 DEBUG = ENV.fetch("DEBUG", "false") == "true"
-require 'rake'
-if DEBUG
-  require 'json'
-else
-  require 'msgpack'
-end
 
-require 'rb-inotify'
+require 'rake'
 require_relative './garden/logger.rb'
 require_relative './garden/metadata.rb'
 require_relative './garden/execute.rb'
