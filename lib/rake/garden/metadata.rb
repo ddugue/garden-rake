@@ -1,8 +1,6 @@
-## TODO: Better docs
-## The goal would be to abstract saving format
+require 'json'
+require 'msgpack'
 module Rake::Garden
-  require 'json'
-  require 'msgpack'
 
   class Metadata
     def initialize(filename=".garden")

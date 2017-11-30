@@ -1,7 +1,6 @@
-require 'rb-inotify'
 require 'find'
-
-$excluded_directories ||= Set.new [".git", "node_modules"]
+require 'rb-inotify'
+$excluded_directories ||= Set.new [".git", "node_modules", "var", "__pycache__"]
 
 module Rake::Garden
 
@@ -81,15 +80,15 @@ module Rake::Garden
 
         # Append watch to notifier
         @notifier.watch(path, :access, :create, :modify) do |event|
-          if event.flags.include? :access
-            if !File.directory? event.absolute_name
+          if !File.directory? event.absolute_name
+            if event.flags.include? :access
               @folder_tree.parents(event.absolute_name).each do |glob|
                 @events[glob][:accessed].add(event.absolute_name)
               end
-            end
-          else
-            @folder_tree.parents(event.absolute_name).each do |glob|
-              @events[glob][:modified].add(event.absolute_name)
+            else
+              @folder_tree.parents(event.absolute_name).each do |glob|
+                @events[glob][:modified].add(event.absolute_name)
+              end
             end
           end
         end
@@ -101,7 +100,9 @@ module Rake::Garden
     # If there is no event, do nothing and continue
     ##
     def process()
-      @notifier.process if IO.select([@notifier.to_io], [], [], 0)
+      while IO.select([@notifier.to_io], [], [], 0)
+        @notifier.process
+      end
     end
 
     ##
@@ -122,8 +123,12 @@ module Rake::Garden
     # Execute any command and return the modified events
     ##
     def execute(cmd, accessed_folders, modified_folders)
+      if cmd.respond_to? :magic_format
+        cmd.magic_format()
+      end
       #We add watcher and clean up old events
-      @purge
+      purge accessed_folders
+      purge modified_folders
 
       # Add watchers before executing
       modified_folders.each do |folder|
@@ -140,7 +145,8 @@ module Rake::Garden
         exit 1
       end
 
-      @process
+      process
+
 
       # Combine results
       accessed_result = accessed_folders.reduce(Set.new) { |set, folder| @events[folder][:accessed] + set}

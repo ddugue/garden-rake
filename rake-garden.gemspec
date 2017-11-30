@@ -10,7 +10,9 @@ Gem::Specification.new do |s|
   s.authors     = ['David Dugue']
   s.email       = 'ddugue@kumoweb.ca'
   s.files       = ["lib/rake/garden.rb", "lib/rake/garden/logger.rb",
-                   "lib/rake/garden/execute.rb", "lib/rake/garden/metadata.rb"]
+                   "lib/rake/garden/execute.rb", "lib/rake/garden/metadata.rb",
+                   "lib/rake/garden/files.rb"
+                  ]
   s.homepage    = 'http://rubygems.org/gems/rake-garden'
   s.license     = 'MIT'
   # Dependencies

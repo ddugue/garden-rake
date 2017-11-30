@@ -5,6 +5,7 @@ require 'rake'
 require_relative './garden/logger.rb'
 require_relative './garden/metadata.rb'
 require_relative './garden/execute.rb'
+require_relative './garden/files.rb'
 
 module Rake::Garden
 
@@ -13,7 +14,9 @@ module Rake::Garden
   end
 
   def close_metadata()
-    $metadata.close()
+    if !$metadata.nil?
+      $metadata.close()
+    end
   end
 
   # Shortcut functions
