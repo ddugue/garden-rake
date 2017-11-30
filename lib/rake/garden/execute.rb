@@ -123,9 +123,6 @@ module Rake::Garden
     # Execute any command and return the modified events
     ##
     def execute(cmd, accessed_folders, modified_folders)
-      if cmd.respond_to? :magic_format
-        cmd.magic_format()
-      end
       #We add watcher and clean up old events
       purge accessed_folders
       purge modified_folders
@@ -171,6 +168,10 @@ module Rake::Garden
       @metadata = metadata
       @watcher = Watcher.instance
       @command = command
+
+      if @command.respond_to? :magic_format
+        @command.magic_format()
+      end
 
       @src_dir = src_dir || Dir
       @out_dir = out_dir || Dir

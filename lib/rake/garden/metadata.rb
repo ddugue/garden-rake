@@ -9,11 +9,14 @@ module Rake::Garden
 
     # Return the hash representing the metadata
     # Metadata is a direct representation of its underlying data
-    def data; @data ||= open || Hash.new; end
+    def data
+      @data ||= open || Hash.new
+      @data
+    end
     def [](ind); data[ind]; end
     def []=(ind, value); data[ind] = value; end
     def key?(key); data.key? key; end
-    def fetch(value, default); data.fetch value, default; end
+    def fetch(value, default); data.fetch(value, default); end
 
     def read()
       File.file?(@filename) ? File.read(@filename) : nil

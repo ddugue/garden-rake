@@ -12,13 +12,13 @@ module Rake::Garden
           when '%f'
             File.basename(f)
           when '%n'
-            File.extname(f)
+            f.pathmap('%n')
           when '%x'
             File.extname(f)
           when '%d'
-            File.extname(f)
+            File.dirname(f)
           when '%X'
-            File.extname(f)
+            f.pathmap('%X')
           when '%p'
             f
           end
