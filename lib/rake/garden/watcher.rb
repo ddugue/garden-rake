@@ -66,7 +66,7 @@ module Rake::Garden
     # Return all the folders that will need to be watched
     ##
     def folders
-      @accessed_folders + @modify_folders
+      @access_watch + @modify_watch
     end
 
     ##
@@ -88,11 +88,12 @@ module Rake::Garden
     # itself
     ##
     def update events
-      @accessed_events = @accessed_watch.reduce(Set.new) { |set, folder| events[folder][:accessed] + set}
-      @modified_events = @modified_watch.reduce(Set.new) { |set, folder| events[folder][:modified] + set}
-      @new_folders = @modified_watch.reduce(Set.new) { |set, folder| events[folder][:folder] + set}
+      @accessed_events = @access_watch.reduce(Set.new) { |set, folder| events[folder][:accessed] + set}
+      @modified_events = @modify_watch.reduce(Set.new) { |set, folder| events[folder][:modified] + set}
+      @new_folders = @modify_watch.reduce(Set.new) { |set, folder| events[folder][:folder] + set}
       @new_folders.each do |f|
-        @modified_events |= Dir.glob('#{f}/**/*').to_set
+        new_files = Dir.glob("#{f}/**/*")
+        @modified_events |= new_files.to_set
       end
       self
     end
@@ -179,8 +180,8 @@ module Rake::Garden
     ##
     def with(watch_ins, &block)
       # Clean up and watch all folders
-      purge aggergate.folders
-      watch_ins.folders.each method(:watch)
+      purge watch_ins.folders
+      watch_ins.folders.each do |p|; watch p; end
 
       block.call
       process

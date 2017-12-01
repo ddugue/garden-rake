@@ -41,10 +41,7 @@ module Rake::Garden
       return logger.log "Skipped #{@command}" if !execute?
 
       data = @watcher.with Watch.new ["."] do
-        result = system @command
-        if result != 0
-          puts "Error!"
-        end
+        system @command
       end
       @metadata[@command] = @metadata.fetch(@command, Hash.new)
       @metadata[@command]["dependencies"] = data.accessed
