@@ -1,9 +1,9 @@
 require 'find'
 require 'rb-inotify'
-module Rake::Garden
+$excluded_directories ||= Set.new [".git", "node_modules", "var", "__pycache__"]
 
+module Rake::Garden
   ##
-  # TODO: Split into a watcher.rb file
   # Registry to hold reference in a directory tree between parent and sub-folders
   # This way if a folder contains a whole nested structure, you can easily reference
   # the parent node with a child node references without going through a whole
@@ -48,11 +48,62 @@ module Rake::Garden
 
   end
 
+  ##
+  # Represent a watch that filters the tree of event result
+  # to match only the one pertaining to the desired events
+  ##
+  class Watch
+    def initialize access_watch, modify_watch = nil
+      @access_watch = access_watch # Folders to watch for :accessed events
+      @modify_watch = modify_watch || access_watch # Folders to watch for :modified events
+
+      @accessed_events = Set.new # Events with :accessed properties
+      @modified_events = Set.new # Events with :modified properties
+      @new_folders = Set.new # Events that created a new folder
+    end
+
+    ##
+    # Return all the folders that will need to be watched
+    ##
+    def folders
+      @accessed_folders + @modify_folders
+    end
+
+    ##
+    # Return array of accessed events
+    ##
+    def accessed
+      @accessed_events.to_a
+    end
+
+    ##
+    # Return array of accessed events
+    ##
+    def outputs
+      @modified_events.to_a
+    end
+
+    ##
+    # Receive all events that happened and filter them to update
+    # itself
+    ##
+    def update events
+      @accessed_events = @accessed_watch.reduce(Set.new) { |set, folder| events[folder][:accessed] + set}
+      @modified_events = @modified_watch.reduce(Set.new) { |set, folder| events[folder][:modified] + set}
+      @new_folders = @modified_watch.reduce(Set.new) { |set, folder| events[folder][:folder] + set}
+      @new_folders.each do |f|
+        @modified_events |= Dir.glob('#{f}/**/*').to_set
+      end
+      self
+    end
+  end
 
   ##
   # Registry for all INotify watchers
   # We can only have ONE inotify watcher per folder
   # so we need to reuse the reference of the inotify watcher globally
+  # Since creation of inotify watcher is kinda expensive, we only create them once
+  ##
   class Watcher
     include Singleton
     def initialize
@@ -60,7 +111,7 @@ module Rake::Garden
 
       @notifier = INotify::Notifier.new
 
-      @events = Hash.new { |h, k| h[k] = {:accessed => Set.new, :modified => Set.new}}
+      @events = Hash.new { |h, k| h[k] = {:accessed => Set.new, :modified => Set.new, :folder => Set.new}}
       @watchers = Set.new # Ref of the watched paths
     end
 
@@ -88,6 +139,13 @@ module Rake::Garden
                 @events[glob][:modified].add(event.absolute_name)
               end
             end
+          else
+            if event.flags.include? :create
+              # New directory we add a watch
+              @folder_tree.parents(event.absolute_name).each do |glob|
+                @events[glob][:folder].add(event.absolute_name)
+              end
+            end
           end
         end
       end
@@ -106,7 +164,7 @@ module Rake::Garden
     ##
     # Purge events that can have been registered by anything before an execution
     # Since, we are not closing the INotify file descriptor, any events
-    # are cached, even the ones not coming from this execution context
+    # are queued, even the ones not coming from this execution context
     ##
     def purge(folders)
       @process
@@ -116,40 +174,18 @@ module Rake::Garden
       end
     end
 
-    ## TODO: Split this execute into a block
-    ##       so we don't execute the command directly
-    # Execute any command and return the modified events
     ##
-    def execute(cmd, accessed_folders, modified_folders)
-      #We add watcher and clean up old events
-      purge accessed_folders
-      purge modified_folders
+    # Execute a block then decorates the watch_ins with the events raised by inotify
+    ##
+    def with(watch_ins, &block)
+      # Clean up and watch all folders
+      purge aggergate.folders
+      watch_ins.folders.each method(:watch)
 
-      # Add watchers before executing
-      modified_folders.each do |folder|
-        watch folder
-      end
-      accessed_folders.each do |folder|
-        watch folder
-      end
-
-      # Execution
-      result = system cmd
-      if !result
-        puts "There was an error executing #{cmd}"
-        exit 1
-      end
-
+      block.call
       process
 
-
-      # Combine results
-      accessed_result = accessed_folders.reduce(Set.new) { |set, folder| @events[folder][:accessed] + set}
-      modified_result = modified_folders.reduce(Set.new) { |set, folder| @events[folder][:modified] + set}
-      return {
-        :accessed => accessed_result,
-        :modified => modified_result
-      }
+      watch_ins.update(@events)
     end
 
     ##

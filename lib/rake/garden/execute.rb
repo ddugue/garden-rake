@@ -1,4 +1,3 @@
-$excluded_directories ||= Set.new [".git", "node_modules", "var", "__pycache__"]
 
 module Rake::Garden
 
@@ -41,10 +40,15 @@ module Rake::Garden
 
       return logger.log "Skipped #{@command}" if !execute?
 
-      data = @watcher.execute @command, ["."], ["."]
+      data = @watcher.with Watch.new ["."] do
+        result = system @command
+        if result != 0
+          puts "Error!"
+        end
+      end
       @metadata[@command] = @metadata.fetch(@command, Hash.new)
-      @metadata[@command]["dependencies"] = data[:accessed].to_a
-      @metadata[@command]["outputs"] = data[:modified].to_a
+      @metadata[@command]["dependencies"] = data.accessed
+      @metadata[@command]["outputs"] = data.outputs
 
       return logger.log "Executed #{@command}"
     end
