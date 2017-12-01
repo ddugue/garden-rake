@@ -4,6 +4,7 @@ $METADATA ||= ENV.fetch("METADATA", $DEBUG ? ".garden.json" : ".garden")
 require 'rake'
 require_relative './garden/logger.rb'
 require_relative './garden/metadata.rb'
+require_relative './garden/watcher.rb'
 require_relative './garden/execute.rb'
 require_relative './garden/files.rb'
 
