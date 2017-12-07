@@ -7,6 +7,7 @@ require_relative './garden/metadata.rb'
 require_relative './garden/watcher.rb'
 require_relative './garden/execute.rb'
 require_relative './garden/files.rb'
+require_relative './garden/parallel.rb'
 
 module Rake::Garden
 
@@ -20,12 +21,30 @@ module Rake::Garden
     end
   end
 
+  def close_threads()
+    Parallel.instance.stop
+  end
+
+  def parallel(&block)
+    open_metadata
+    Parallel.instance.with($metadata, block)
+  end
+
+
   # Shortcut functions
   def execute(command)
     open_metadata
-    exec = Executor.new(command, $metadata)
+    if ($in_parallel)
+      exec = ParallelExecutor.new(command, $metadata)
+    else
+      exec = Executor.new(command, $metadata)
+    end
     exec.execute()
   end
 
-  at_exit { close_metadata() }
+
+  at_exit {
+    close_metadata()
+    close_threads()
+  }
 end

@@ -11,7 +11,8 @@ Gem::Specification.new do |s|
   s.email       = 'ddugue@kumoweb.ca'
   s.files       = ["lib/rake/garden.rb", "lib/rake/garden/logger.rb",
                    "lib/rake/garden/execute.rb", "lib/rake/garden/metadata.rb",
-                   "lib/rake/garden/files.rb", "lib/rake/garden/watcher.rb"
+                   "lib/rake/garden/files.rb", "lib/rake/garden/watcher.rb",
+                   "lib/rake/garden/parallel.rb",
                   ]
   s.homepage    = 'http://rubygems.org/gems/rake-garden'
   s.license     = 'MIT'
