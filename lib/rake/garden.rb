@@ -27,7 +27,7 @@ module Rake::Garden
 
   def parallel(&block)
     open_metadata
-    Parallel.instance.with($metadata, block)
+    Parallel.instance.with($metadata, &block)
   end
 
 

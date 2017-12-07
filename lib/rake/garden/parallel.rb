@@ -1,5 +1,7 @@
 require 'etc'
 ## TODO: Abstract some dep away
+## TODO: Initialize thread lazily (if no commands, it is stupid to create threads)
+## TODO: Better to span thread than constan running loop for synchronize I guess
 module Rake::Garden
   ##
   # Utility to execute actions in parallel via threads
@@ -10,6 +12,7 @@ module Rake::Garden
       @threads = []
       @executing = []
       @queue = Queue.new
+      @watcher = Watcher.instance
 
       @commands = []
 
@@ -57,7 +60,7 @@ module Rake::Garden
     def stop
       @start = false
       @threads.each do |thread|
-        thread.join if !thread.nil?
+        thread.exit if !thread.nil?
       end
     end
 
@@ -65,7 +68,8 @@ module Rake::Garden
     # Wait for the queue to be empty and execution to be done
     ##
     def wait
-      while !(@queue.empty? || @executing.find { |obj| obj }) do
+      while !@queue.empty? || @executing.include?(true) do
+        p "queue: #{@queue.empty?}; excuting: #{@executing}"
         sleep 0.1
       end
     end
@@ -84,9 +88,9 @@ module Rake::Garden
       block.call
 
       data = @watcher.with Watch.new ["."] do
-        @unlock
+        unlock
         wait
-        @lock
+        lock
       end
 
       $in_parallel = false
@@ -102,12 +106,18 @@ module Rake::Garden
       outputs = Set.new
 
       @commands.each do |cmd|
-        m = metadata.fetch(@command, {"dependencies" => Array.new, "outputs" => Array.new} )
+        m = metadata.fetch(cmd, {"dependencies" => Array.new, "outputs" => Array.new} )
         accessed += m["dependencies"].to_set
         outputs += m["outputs"].to_set
       end
 
-      if data.accessed != accessed || data.outputs != outputs
+      p "Watcher accessed #{data.accessed}"
+      p "Watcher outputs #{data.accessed}"
+
+      p "Supposed accessed #{accessed.to_a}"
+      p "Supposed outputs #{outputs.to_a}"
+
+      if data.accessed.to_set != accessed || data.outputs.to_set != outputs
         p "Need to reexecute block in sync mode"
         block.call
       end

@@ -2,6 +2,8 @@ require 'find'
 require 'rb-inotify'
 $excluded_directories ||= Set.new [".git", "node_modules", "var", "__pycache__"]
 
+### TODO: Give a way to access accessed events
+###       For parallel
 module Rake::Garden
   ##
   # Registry to hold reference in a directory tree between parent and sub-folders
