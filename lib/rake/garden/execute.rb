@@ -1,8 +1,6 @@
 
 module Rake::Garden
 
-
-  ## TODO: Split into multiple Executor class with different execute? methods
   class Executor
     def initialize(command, metadata, src_dir=nil, out_dir=nil)
       @metadata = metadata
@@ -10,7 +8,7 @@ module Rake::Garden
       @command = command
 
       if @command.respond_to? :magic_format
-        @command.magic_format()
+        @command.magic_format() # Replaces some format tags with path info
       end
 
       @src_dir = src_dir || Dir
@@ -48,6 +46,21 @@ module Rake::Garden
       @metadata[@command]["outputs"] = data.outputs
 
       return logger.log "Executed #{@command}"
+    end
+  end
+
+  ##
+  # Executor that executes commands in parallel via the parallel class
+  # Incidently, does not check if it changes. This will be the role
+  ##
+  class ParallelExecutor < Executor
+    def execute()
+      logger = Logger.new
+      return logger.log "Skipped #{@command}" if !execute?
+
+      Parallel.instance.queue @command
+
+      return logger.log "Queued #{@command} for execution"
     end
   end
 

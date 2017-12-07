@@ -1,5 +1,6 @@
 require 'json'
 require 'msgpack'
+## TODO: Add some methods to access common value to delegate from execute module
 module Rake::Garden
 
   class Metadata
