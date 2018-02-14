@@ -19,5 +19,6 @@ Gem::Specification.new do |s|
   # Dependencies
   s.add_runtime_dependency "msgpack", "~> 1.1", ">= 1.1.0"
   s.add_runtime_dependency "rb-inotify", "~> 0.9",  ">= 0.9.10"
+  s.add_runtime_dependency "os", "~> 1.0",  ">= 1.0.0"
 
 end
