@@ -1,7 +1,7 @@
 require 'find'
 require 'os'
 
-$hasInotify = OS.linux? && require 'rb-inotify'
+$hasInotify = require 'rb-inotify' if OS.linux?
 
 $excluded_directories ||= Set.new [".git", "node_modules", "var", "__pycache__"]
 
