@@ -1,5 +1,6 @@
 require 'find'
-require 'rb-inotify'
+$hasInotify = require 'rb-inotify'
+
 $excluded_directories ||= Set.new [".git", "node_modules", "var", "__pycache__"]
 
 ### TODO: Give a way to access accessed events
@@ -112,7 +113,7 @@ module Rake::Garden
     def initialize
       @folder_tree = FolderTree.instance
 
-      @notifier = INotify::Notifier.new
+      @notifier = $hasInotify && INotify::Notifier.new
 
       @events = Hash.new { |h, k| h[k] = {:accessed => Set.new, :modified => Set.new, :folder => Set.new}}
       @watchers = Set.new # Ref of the watched paths
@@ -122,6 +123,9 @@ module Rake::Garden
     # Adds an Inotify watcher on a path and all its sub folder
     ##
     def watch(path)
+      if !@notifier
+        return nil
+      end
       # Crawl folder tree
       paths = @folder_tree.hook path
 
@@ -159,8 +163,10 @@ module Rake::Garden
     # If there is no event, do nothing and continue
     ##
     def process()
-      while IO.select([@notifier.to_io], [], [], 0)
-        @notifier.process
+      if $hasInotify
+        while IO.select([@notifier.to_io], [], [], 0)
+          @notifier.process
+        end
       end
     end
 
@@ -183,7 +189,9 @@ module Rake::Garden
     def with(watch_ins, &block)
       # Clean up and watch all folders
       purge watch_ins.folders
-      watch_ins.folders.each do |p|; watch p; end
+      watch_ins.folders.each do |p|
+        watch p
+      end
 
       block.call
       process
@@ -195,7 +203,9 @@ module Rake::Garden
     # Close the INotify file descriptors
     ##
     def close()
-      @notifier.close
+      if $hasInotify
+        @notifier.close
+      end
     end
   end
 end
