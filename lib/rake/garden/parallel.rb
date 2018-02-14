@@ -18,7 +18,12 @@ module Rake::Garden
 
       @unlocked = false
       @start = true
-      Etc.nprocessors.times do |i|
+      begin
+        @nbprocessors = Etc.nprocessors()
+      rescue NoMethodError => e
+        @nbprocessors = 2
+      end
+      @nbprocessors.times do |i|
         @threads << Thread.new do
           while @start
             if @unlocked and !@queue.empty?
