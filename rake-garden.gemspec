@@ -10,9 +10,8 @@ Gem::Specification.new do |s|
   s.authors     = ['David Dugue']
   s.email       = 'ddugue@kumoweb.ca'
   s.files       = ["lib/rake/garden.rb", "lib/rake/garden/logger.rb",
-                   "lib/rake/garden/execute.rb", "lib/rake/garden/metadata.rb",
-                   "lib/rake/garden/files.rb", "lib/rake/garden/watcher.rb",
-                   "lib/rake/garden/parallel.rb",
+                   "lib/rake/garden/hooks.rb", "lib/rake/garden/chores.rb",
+                   "lib/rake/garden/strace.rb",
                   ]
   s.homepage    = 'http://rubygems.org/gems/rake-garden'
   s.license     = 'MIT'
@@ -20,5 +19,6 @@ Gem::Specification.new do |s|
   s.add_runtime_dependency "msgpack", "~> 1.1", ">= 1.1.0"
   s.add_runtime_dependency "rb-inotify", "~> 0.9",  ">= 0.9.10"
   s.add_runtime_dependency "os", "~> 1.0",  ">= 1.0.0"
+  s.add_runtime_dependency "colorize", "~> 0.8"
 
 end
