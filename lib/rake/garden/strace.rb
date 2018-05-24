@@ -32,7 +32,6 @@ module Rake::Garden
 
     def run()
       Open3.popen3(command) {|stdin, stdout, stderr, wait_thr|
-        pid = wait_thr.pid # pid of the started process.
         exit_status = wait_thr.value # Process::Status object returned.
         if exit_status != 0
           $stderr.puts "There was a problem running command: '#{@command}'".red
