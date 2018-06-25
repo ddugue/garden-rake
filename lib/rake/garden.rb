@@ -23,7 +23,7 @@ module Rake::Garden
   def chore(*args, &block) # :doc:
     Chore.define_task(*args, &block)
   end
-  # end
+
   # def open_metadata()
   #   $metadata ||= $METADATA.end_with?(".json") ? JSONMetadata.new($METADATA) : MSGPackMetadata.new($METADATA)
   # end
@@ -58,6 +58,7 @@ module Rake::Garden
 
   # at_exit {
   #   close_metadata()
-  #   close_threads()
+  #   # close_threads()
   # }
+  # open_metadata()
 end
