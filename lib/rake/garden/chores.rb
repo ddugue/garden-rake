@@ -1,22 +1,64 @@
 require "rake/task.rb"
 require "ostruct"
-require 'date'
+require 'time'
 require 'set'
+require 'json'
 # require "rbtrace"
 module Rake::Garden
-  class Chore < Rake::Task
-    def initialize(task_name, app)
-      @last_modified = nil
-      @files = nil
-      super task_name, app
+
+  class TreeDict
+    def initialize(data=nil, parent=nil)
+      @data = data || Hash.new
+      @parent = parent
+      @namespaces = Hash.new
+    end
+
+    def namespace(name)
+      return @namespaces[name.to_s] if @namespaces.key? name.to_s
+      if @data.key? name.to_s
+        @namespaces[name.to_s] = TreeDict.new(@data[name.to_s], self)
+      else
+        @namespaces[nameto_s] = TreeDict.new(nil, self)
+      end
     end
 
     ##
-    # last_executed return the last time this task was executed
+    # Return a single hash data tree
     ##
-    def last_executed
-      return @last_modified if @last_modified
-      return DateTime.new() # Oldest date possible
+    def to_json(*)
+      @data.merge(@namespaces).to_json()
+    end
+
+    def save
+      @parent.save if @parent
+    end
+
+    def [](ind); @data[ind]; end
+    def []=(ind, value); @data[ind] = value; end
+    def key?(key); @data.key? key; end
+    def fetch(value, default); @data.fetch(value, default); end
+  end
+
+  class JSONMetadata < TreeDict
+    def initialize(filename)
+      @filename = filename
+      d = JSON.load(File.read(@filename)) if File.file?(@filename)
+      super d
+    end
+
+    def save()
+      File.open @filename, "w+" do |file|
+        JSON.dump(self, file)
+      end
+    end
+  end
+
+  class Chore < Rake::Task
+    def initialize(task_name, app)
+      @files = nil
+      @metadata = metadata().namespace(task_name)
+      @last_executed = Time.at(@metadata.fetch('last_executed', 0))
+      super task_name, app
     end
 
     def lookup_prerequisite(prerequisite_name) # :nodoc:
@@ -32,6 +74,7 @@ module Rake::Garden
     def invoke_with_call_chain(*args)
       puts "Overriding in chore"
       super
+
     end
 
     ##
@@ -64,6 +107,7 @@ module Rake::Garden
       application.trace "** Execute #{name}" if application.options.trace
       application.enhance_with_matching_rule(name) if @actions.empty?
       @actions.each { |act| self.instance_exec(self, args, &act) }
+      @metadata["last_executed"] = Time.now().to_i
     end
 
     # prerequisite_tasks
@@ -79,7 +123,7 @@ module Rake::Garden
         end
         return needed if needed
       end
-      puts "Skipping #{t}" if !needed
+      puts "Skipping" if !needed
       needed
     end
 
@@ -114,14 +158,13 @@ module Rake::Garden
       super task_name, app
     end
 
-
     def files
       @files ||= Set.new(Dir.glob(@pattern))
     end
 
     # Changed? returns wether the file was modified after date
     def changed?(date=nil)
-      !files.find_index { |f| File.mtime(File.read(f)) > date }.nil?
+      !files.find_index { |f| File.mtime(f) > date }.nil?
     end
 
     # Return all the files the depending chores should treat

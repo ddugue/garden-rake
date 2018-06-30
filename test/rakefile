@@ -5,7 +5,7 @@ task :booty do
   puts "BOOTY"
 end
 
-chore :test => [true, "*.txt", :booty] do |t|
+chore :test => ["*.txt"] do |t|
   puts "Testing chore"
   t.files.each do |f|
     puts f

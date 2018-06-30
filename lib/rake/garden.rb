@@ -20,6 +20,10 @@ class Proc
 end
 
 module Rake::Garden
+  def metadata()
+    $metadata ||= JSONMetadata.new ".garden.json"
+  end
+
   def chore(*args, &block) # :doc:
     Chore.define_task(*args, &block)
   end
@@ -56,9 +60,8 @@ module Rake::Garden
   # end
 
 
-  # at_exit {
-  #   close_metadata()
-  #   # close_threads()
-  # }
+  at_exit {
+    $metadata.save if $metadata
+  }
   # open_metadata()
 end
