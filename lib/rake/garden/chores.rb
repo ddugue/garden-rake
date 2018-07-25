@@ -74,7 +74,6 @@ module Rake::Garden
     def invoke_with_call_chain(*args)
       puts "Overriding in chore"
       super
-
     end
 
     ##
