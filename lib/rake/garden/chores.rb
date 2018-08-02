@@ -53,9 +53,17 @@ module Rake::Garden
     end
   end
 
+  ##
+  # A chore is a task you do not want to execute or the execute it as needed
+  # It tries to evaluate wether it should be executed or net
   class Chore < Rake::Task
+
+    attr_reader :last_executed
+    attr_reader :output_files
+
     def initialize(task_name, app)
       @files = nil
+      @output_files = nil
       @metadata = metadata().namespace(task_name)
       @last_executed = Time.at(@metadata.fetch('last_executed', 0))
       super task_name, app
@@ -83,18 +91,11 @@ module Rake::Garden
       @files ||=
         begin
           files = Set.new
-          prerequisite_tasks.each do |t|
-            files.merge(t.dep_files) if t.respond_to? "dep_files"
+          prerequisite_tasks.select{|t| t.is_a? Chore }.each do |t|
+            files.merge(t.output_files)
           end
           files
         end
-    end
-
-    ##
-    # Return the set of all changed files
-    ##
-    def dep_files
-      return Set.new
     end
 
     def execute(args=nil)
@@ -109,15 +110,29 @@ module Rake::Garden
       @metadata["last_executed"] = Time.now().to_i
     end
 
-    # prerequisite_tasks
+    ##
+    # Return wether a single file changed in regard to this task
+    ##
+    def has_changed(file)
+      File.mtime(f) > @last_executed
+    end
+
+    ##
+    # Return wether the task should force is descendant to execute
+    ##
+    def force?
+      false
+    end
+
     def needed?
       needed = prerequisite_tasks.empty?
       prerequisite_tasks.each do |t|
         puts "Checking if #{t} has changed"
-        if t.respond_to? "changed?"
-          needed ||= t.changed? @last_executed
+        if t.is_a? Chore
+          needed ||= t.force?
+          needed ||= !t.output_files.find_index { |f| has_changed f }.nil?
         else
-          puts "#{t} is not responding to changed?"
+          # We force execution if it is a regular task
           needed ||= true
         end
         return needed if needed
@@ -139,9 +154,7 @@ module Rake::Garden
   # for changed. Forcing dependant tasks to execute.
   ##
   class NoopChore < Chore
-
-    # Changed? always return true for noop
-    def changed?(date=nil)
+    def force?
       true
     end
   end
@@ -157,18 +170,12 @@ module Rake::Garden
       super task_name, app
     end
 
-    def files
+    def needed?
+      true
+    end
+
+    def output_files
       @files ||= Set.new(Dir.glob(@pattern))
-    end
-
-    # Changed? returns wether the file was modified after date
-    def changed?(date=nil)
-      !files.find_index { |f| File.mtime(f) > date }.nil?
-    end
-
-    # Return all the files the depending chores should treat
-    def dep_files
-      files
     end
   end
 end
