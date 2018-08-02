@@ -8,6 +8,8 @@ end
 chore :test => ["*.txt"] do |t|
   puts "Testing chore"
   t.files.each do |f|
-    puts f
+    b = 2
+    puts f if t.has_changed f
+    cp f, "sub/%f.2.txt"
   end
 end

@@ -79,10 +79,10 @@ module Rake::Garden
       end
     end
 
-    def invoke_with_call_chain(*args)
-      puts "Overriding in chore"
-      super
-    end
+    # def invoke_with_call_chain(*args)
+    #   puts "Overriding in chore"
+    #   super
+    # end
 
     ##
     # Return the set of all prequisite files
@@ -98,6 +98,17 @@ module Rake::Garden
         end
     end
 
+    def cp(f, name)
+      puts "MAGIC CP"
+    end
+
+    def decorate(act)
+      puts "Decorating"
+      puts act.binding.local_variables
+      act.binding.local_variable_set(:cp, -> (f, name) { puts "OUAH #{f}" } )
+      act
+    end
+
     def execute(args=nil)
       args ||= EMPTY_TASK_ARGS
       if application.options.dryrun
@@ -106,6 +117,8 @@ module Rake::Garden
       end
       application.trace "** Execute #{name}" if application.options.trace
       application.enhance_with_matching_rule(name) if @actions.empty?
+
+      # Instance exec decorate the context of the lambda with self methods
       @actions.each { |act| self.instance_exec(self, args, &act) }
       @metadata["last_executed"] = Time.now().to_i
     end
@@ -114,7 +127,7 @@ module Rake::Garden
     # Return wether a single file changed in regard to this task
     ##
     def has_changed(file)
-      File.mtime(f) > @last_executed
+      File.mtime(file) > @last_executed
     end
 
     ##
@@ -130,7 +143,7 @@ module Rake::Garden
         puts "Checking if #{t} has changed"
         if t.is_a? Chore
           needed ||= t.force?
-          needed ||= !t.output_files.find_index { |f| has_changed f }.nil?
+          needed ||= !t.output_files.find_index {|f| has_changed(f) }.nil?
         else
           # We force execution if it is a regular task
           needed ||= true
