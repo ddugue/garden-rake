@@ -4,10 +4,11 @@ $DEBUG ||= ENV.fetch("DEBUG", "false") == "true"
 $METADATA ||= '.garden.json'
 
 require 'rake'
-require_relative './garden/hooks.rb'
+# require_relative './garden/hooks.rb'
 require_relative './garden/chores.rb'
 require_relative './garden/strace.rb'
 require_relative './garden/files.rb'
+# require_relative './garden/parallel.rb'
 # require_relative './garden/logger.rb'
 # require_relative './garden/metadata.rb'
 # require_relative './garden/watcher.rb'

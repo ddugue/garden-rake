@@ -3,6 +3,7 @@ require "ostruct"
 require 'time'
 require 'set'
 require 'json'
+require 'pathname'
 # require "rbtrace"
 module Rake::Garden
 
@@ -173,8 +174,36 @@ module Rake::Garden
     end
   end
 
+  class CmdExecutor
+    def initialize(cmd)
+      @stdin, @stdout, @stderr, @thread = Open3.popen3 cmd
+    end
+
+    def wait
+      @thread.value
+    end
+
+    def error?
+      @thread.value != 0
+    end
+
+    def error
+      @stderr.string if @thread.value != 0
+    end
+
+    def log
+      @stdout.string
+    end
+
+    def print
+      @stdout.each_line { |line| puts line }
+    end
+
+  end
+
   ##
   # Chore that decorate
+  ##
   class Chore < BaseChore
     def lookup_prerequisite(prerequisite_name) # :nodoc:
       if prerequisite_name == true
@@ -187,13 +216,35 @@ module Rake::Garden
     end
 
     def initialize(task_name, app)
+      # puts(app.rakefile) rakefile is the ref to the rakefile
       @queue = []
       super task_name, app
     end
 
+    def execute(args=nil)
+      super args
+      @queue.each do |cmd|
+        cmd.wait
+        cmd.print
+      end
+    end
+
+    def queue(cmd)
+      @queue << CmdExecutor.new(cmd)
+      # @queue.push(cmd)
+    end
+
     def cp(f, name)
       name.magic_format if name.respond_to? :magic_format
-      puts "Queuing cp #{f} #{name}" if has_changed(f)
+      if has_changed(f)
+        puts "Queuing cp #{f} #{name}"
+        queue "mkdir -p #{Pathname.new(name).dirname} && cp #{f} #{name}"
+      end
+    end
+
+    def sh(cmd)
+      puts "Queuing #{cmd}"
+      queue cmd
     end
 
     class << self
