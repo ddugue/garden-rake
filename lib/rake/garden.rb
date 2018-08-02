@@ -7,11 +7,11 @@ require 'rake'
 require_relative './garden/hooks.rb'
 require_relative './garden/chores.rb'
 require_relative './garden/strace.rb'
+require_relative './garden/files.rb'
 # require_relative './garden/logger.rb'
 # require_relative './garden/metadata.rb'
 # require_relative './garden/watcher.rb'
 # require_relative './garden/execute.rb'
-# require_relative './garden/files.rb'
 # require_relative './garden/parallel.rb'
 class Proc
   def call_with_vars(vars, *args)

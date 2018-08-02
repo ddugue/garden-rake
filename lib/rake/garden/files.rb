@@ -53,4 +53,15 @@ module Rake::Garden
       block.call f
   end
 
+  ##
+  # Class used to decorate the each method with our magic_format method
+  ##
+  class FileSet < Set
+    def each(&block)
+      super do |f|
+        with_file f, &block
+      end
+    end
+  end
+
 end

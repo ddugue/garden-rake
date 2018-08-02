@@ -6,6 +6,9 @@ require 'json'
 # require "rbtrace"
 module Rake::Garden
 
+  ##
+  # Recursive datastructure to fetch data from a metadata file
+  ##
   class TreeDict
     def initialize(data=nil, parent=nil)
       @data = data || Hash.new
@@ -13,12 +16,14 @@ module Rake::Garden
       @namespaces = Hash.new
     end
 
+    ##
+    # Return a sub division of this datastructure
     def namespace(name)
       return @namespaces[name.to_s] if @namespaces.key? name.to_s
       if @data.key? name.to_s
         @namespaces[name.to_s] = TreeDict.new(@data[name.to_s], self)
       else
-        @namespaces[nameto_s] = TreeDict.new(nil, self)
+        @namespaces[name.to_s] = TreeDict.new(nil, self)
       end
     end
 
@@ -56,7 +61,7 @@ module Rake::Garden
   ##
   # A chore is a task you do not want to execute or the execute it as needed
   # It tries to evaluate wether it should be executed or net
-  class Chore < Rake::Task
+  class BaseChore < Rake::Task
 
     attr_reader :last_executed
     attr_reader :output_files
@@ -69,15 +74,6 @@ module Rake::Garden
       super task_name, app
     end
 
-    def lookup_prerequisite(prerequisite_name) # :nodoc:
-      if prerequisite_name == true
-        return NoopChore.new('noop', @application)
-      elsif prerequisite_name.instance_of? String and prerequisite_name.include? "."
-        return FileChore.new(prerequisite_name, @application)
-      else
-        return super prerequisite_name.to_s
-      end
-    end
 
     # def invoke_with_call_chain(*args)
     #   puts "Overriding in chore"
@@ -90,24 +86,14 @@ module Rake::Garden
     def files
       @files ||=
         begin
-          files = Set.new
-          prerequisite_tasks.select{|t| t.is_a? Chore }.each do |t|
+          files = FileSet.new
+          prerequisite_tasks.select{|t| t.is_a? BaseChore }.each do |t|
             files.merge(t.output_files)
           end
           files
         end
     end
 
-    def cp(f, name)
-      puts "MAGIC CP"
-    end
-
-    def decorate(act)
-      puts "Decorating"
-      puts act.binding.local_variables
-      act.binding.local_variable_set(:cp, -> (f, name) { puts "OUAH #{f}" } )
-      act
-    end
 
     def execute(args=nil)
       args ||= EMPTY_TASK_ARGS
@@ -141,7 +127,7 @@ module Rake::Garden
       needed = prerequisite_tasks.empty?
       prerequisite_tasks.each do |t|
         puts "Checking if #{t} has changed"
-        if t.is_a? Chore
+        if t.is_a? BaseChore
           needed ||= t.force?
           needed ||= !t.output_files.find_index {|f| has_changed(f) }.nil?
         else
@@ -154,11 +140,6 @@ module Rake::Garden
       needed
     end
 
-    class << self
-      def define_task(*args, &block)
-        Rake.application.define_task(self, *args, &block)
-      end
-    end
   end
 
   ##
@@ -166,7 +147,7 @@ module Rake::Garden
   # NoopChore is a task that does nothing, but will always be resolved to true
   # for changed. Forcing dependant tasks to execute.
   ##
-  class NoopChore < Chore
+  class NoopChore < BaseChore
     def force?
       true
     end
@@ -177,7 +158,7 @@ module Rake::Garden
   # FileChore is a task that encapsulate files, it is used to know if a task should
   # execute
   ##
-  class FileChore < Chore
+  class FileChore < BaseChore
     def initialize(task_name, app)
       @pattern = task_name
       super task_name, app
@@ -188,7 +169,37 @@ module Rake::Garden
     end
 
     def output_files
-      @files ||= Set.new(Dir.glob(@pattern))
+      @files ||= FileSet.new(Dir.glob(@pattern))
+    end
+  end
+
+  ##
+  # Chore that decorate
+  class Chore < BaseChore
+    def lookup_prerequisite(prerequisite_name) # :nodoc:
+      if prerequisite_name == true
+        return NoopChore.new('noop', @application)
+      elsif prerequisite_name.instance_of? String and prerequisite_name.include? "."
+        return FileChore.new(prerequisite_name, @application)
+      else
+        return super prerequisite_name.to_s
+      end
+    end
+
+    def initialize(task_name, app)
+      @queue = []
+      super task_name, app
+    end
+
+    def cp(f, name)
+      name.magic_format if name.respond_to? :magic_format
+      puts "Queuing cp #{f} #{name}" if has_changed(f)
+    end
+
+    class << self
+      def define_task(*args, &block)
+        Rake.application.define_task(self, *args, &block)
+      end
     end
   end
 end
