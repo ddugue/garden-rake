@@ -1,1 +1,1 @@
-cd test && rake test
+cd test && rake -f ../etc/rakefile test

@@ -10,11 +10,10 @@ module Rake::Garden
     include Singleton
     def initialize
       @threads = []
-      @executing = []
       @queue = Queue.new
-      @watcher = Watcher.instance
+      # @watcher = Watcher.instance
 
-      @commands = []
+      # @commands = []
 
       @unlocked = false
       @start = true
@@ -23,11 +22,16 @@ module Rake::Garden
       rescue NoMethodError => e
         @nbprocessors = 2
       end
+      puts "NB Proc: #{@nbprocessors}"
+
+      @executing = Array.new(@nbprocessors)
       @nbprocessors.times do |i|
         @threads << Thread.new do
           while @start
-            if @unlocked and !@queue.empty?
+            if !@queue.empty?
               @executing[i] = true
+              cmd = @queue.pop
+              # puts "Executing #{cmd}"
               system @queue.pop
               @executing[i] = false
             end
@@ -37,7 +41,7 @@ module Rake::Garden
     end
 
     ##
-    # Lock the process, making him unable to receive new commands
+    # Lock the process, making it unable to execute new commands
     ##
     def lock
       @unlocked = false
@@ -55,7 +59,7 @@ module Rake::Garden
     # Queue a single command so it gets executed by the system
     ##
     def queue cmd
-      @commands << cmd
+      # @commands << cmd
       @queue << cmd
     end
 
@@ -75,7 +79,7 @@ module Rake::Garden
     def wait
       while !@queue.empty? || @executing.include?(true) do
         p "queue: #{@queue.empty?}; excuting: #{@executing}"
-        sleep 0.1
+        sleep 0.01
       end
     end
 

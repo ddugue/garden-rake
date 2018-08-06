@@ -29,7 +29,7 @@ module Rake::Garden
         task.add_description(get_description(task))
       end
       task.enhance(deps, &block)
-    ensure
-      @scope = original_scope
-end
+  ensure
+    @scope = original_scope
+  end
 end
