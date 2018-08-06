@@ -69,7 +69,7 @@ module Rake::Garden
 
     def initialize(task_name, app)
       @files = nil
-      @output_files = nil
+      @output_files = FileSet.new
       @metadata = metadata().namespace(task_name)
       @last_executed = Time.at(@metadata.fetch('last_executed', 0))
       super task_name, app
@@ -131,7 +131,7 @@ module Rake::Garden
         end
         return needed if needed
       end
-      puts "Skipping" if !needed
+      puts "Skipping #{name}" if !needed
       needed
     end
 
@@ -218,12 +218,15 @@ module Rake::Garden
 
     def execute(args=nil)
       super args
+      # Once the queue is filled we execute all the waiting commands
       @queue.each do |cmd|
         cmd.wait
         cmd.print
       end
     end
 
+    ##
+    # We force the execution if the rakefile changed since last execution
     def force?
       has_changed(@application.rakefile)
     end
@@ -238,6 +241,7 @@ module Rake::Garden
       if has_changed(f)
         puts "Queuing cp #{f} #{name}"
         queue "mkdir -p #{Pathname.new(name).dirname} && cp #{f} #{name}"
+        @output_files << name
       end
     end
 
