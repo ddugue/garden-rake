@@ -211,7 +211,6 @@ module Rake::Garden
     end
 
     def initialize(task_name, app)
-      # puts(app.rakefile) rakefile is the ref to the rakefile
       @queue = []
       super task_name, app
     end
@@ -233,7 +232,6 @@ module Rake::Garden
 
     def queue(cmd)
       @queue << CmdExecutor.new(cmd)
-      # @queue.push(cmd)
     end
 
     def cp(f, name)
