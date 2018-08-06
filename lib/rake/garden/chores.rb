@@ -75,12 +75,6 @@ module Rake::Garden
       super task_name, app
     end
 
-
-    # def invoke_with_call_chain(*args)
-    #   puts "Overriding in chore"
-    #   super
-    # end
-
     ##
     # Return the set of all prequisite files
     ##
@@ -125,7 +119,7 @@ module Rake::Garden
     end
 
     def needed?
-      needed = prerequisite_tasks.empty?
+      needed = prerequisite_tasks.empty? || force?
       prerequisite_tasks.each do |t|
         puts "Checking if #{t} has changed"
         if t.is_a? BaseChore
@@ -173,6 +167,7 @@ module Rake::Garden
       @files ||= FileSet.new(Dir.glob(@pattern))
     end
   end
+
 
   class CmdExecutor
     def initialize(cmd)
@@ -227,6 +222,10 @@ module Rake::Garden
         cmd.wait
         cmd.print
       end
+    end
+
+    def force?
+      has_changed(@application.rakefile)
     end
 
     def queue(cmd)
