@@ -18,7 +18,7 @@ module Rake::Garden
       if @data.key? name.to_s
         @namespaces[name.to_s] = TreeDict.new(@data[name.to_s], self)
       else
-        @namespaces[nameto_s] = TreeDict.new(nil, self)
+        @namespaces[name.to_s] = TreeDict.new(nil, self)
       end
     end
 
@@ -72,7 +72,7 @@ module Rake::Garden
     end
 
     def invoke_with_call_chain(*args)
-      puts "Overriding in chore"
+      puts "Overriding in chore #{name}"
       super
     end
 
