@@ -188,7 +188,10 @@ module Rake::Garden
     end
 
     def log(total)
-      "[  ]"
+      "[  ORDER/TOTAL] rakefile:BoldL32Bold - GreenCMDEndGreen    ... blue0.007sblue"
+      " *** Error or output grey or red ***"
+      "full cmd"
+      "starts log"
     end
     def debug(msg)
       $stdout.puts msg.grey
