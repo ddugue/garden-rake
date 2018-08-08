@@ -4,6 +4,7 @@ require 'time'
 require 'set'
 require 'json'
 require 'pathname'
+require 'colorize'
 # require "rbtrace"
 module Rake::Garden
 
@@ -168,9 +169,41 @@ module Rake::Garden
     end
   end
 
+  ##
+  # AbstractCmd represent an abstract command that can be queued and run
+  class AbstractCmd
 
-  class CmdExecutor
-    def initialize(cmd)
+    # FileSet of input files
+    attr_accessor :input_files
+
+    # Fileset of output filse
+    attr_accessor :output_files
+
+    def initialize(order, origin, loglevel: nil, workdir: nil, env: nil)
+      @order = order
+      @origin = origin
+      @loglevel = loglevel || nil
+      @workdir = workdir || nil
+      @env = env || nil
+    end
+
+    def log(total)
+      "[  ]"
+    end
+    def debug(msg)
+      $stdout.puts msg.grey
+    end
+
+    def success(msg)
+      $stdout.print
+    end
+
+
+    def execution_time
+      @thread.times
+    end
+
+    def run
       @stdin, @stdout, @stderr, @thread = Open3.popen3 cmd
     end
 
@@ -195,6 +228,7 @@ module Rake::Garden
     end
 
   end
+
 
   ##
   # Chore that decorate
