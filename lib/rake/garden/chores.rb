@@ -80,12 +80,12 @@ module Rake::Garden
     attr_reader :output_files
 
     def initialize(task_name, app)
-      @files = nil
       @output_files = FileSet.new
       @metadata = metadata().namespace(task_name)
       @last_executed = Time.at(@metadata.fetch('last_executed', 0) || 0)
-      @command_index = 0 # Reference for command execution
+      @command_index = 0 # Reference for command execution, see queue
       @logger = Logger.new(level:Logger::VERBOSE)
+      @force = false # Wether to force the task to execute
       super task_name, app
     end
 
@@ -123,19 +123,6 @@ module Rake::Garden
       File.mtime(file) > @last_executed
     end
 
-    ##
-    # Return wether the task should force is descendant to execute
-    ##
-    def force?
-      false
-    end
-
-    ##
-    # Set the task as a failure
-    def failed
-      @succeeded = false
-    end
-
     def invoke_with_call_chain(*args)
       @succeeded = true
       super *args
@@ -144,33 +131,16 @@ module Rake::Garden
       exit(1) if !@succeeded
     end
 
+    ##
+    # Override
+    # Return wether the task need to be override
     def needed?
-      needed = prerequisite_tasks.empty? || force?
-      prerequisite_tasks.each do |t|
-        # puts "Checking if #{t} has changed"
-        if t.is_a? BaseChore
-          needed ||= t.force?
-          needed ||= !t.output_files.find_index {|f| has_changed(f) }.nil?
-        else
-          # We force execution if it is a regular task
-          needed ||= true
-        end
-        return needed if needed
-      end
+      needed = prerequisite_tasks.empty? || @force
+      needed ||= prerequisite_tasks.any? { |t|
+        !t.is_a? BaseChore or t.output_files.any? {|f| has_changed(f) }
+      }
       @logger.important(" Skipping task: #{name.capitalize.bold}") if !needed
       needed
-    end
-
-  end
-
-  ##
-  # NoopChore
-  # NoopChore is a task that does nothing, but will always be resolved to true
-  # for changed. Forcing dependant tasks to execute.
-  ##
-  class NoopChore < BaseChore
-    def force?
-      true
     end
   end
 
@@ -246,11 +216,9 @@ module Rake::Garden
     attr_writer :origin   # Origin of the cmd in the rakefile (for debug purpose)
     attr_writer :loglevel # Log Level for messages
 
-    def initialize(origin: nil, loglevel: 1, workdir: nil, env: nil)
-      @origin = origin
+    def initialize(loglevel: 1, workdir: nil, env: nil)
       @workdir = workdir || Dir.pwd
       @env = env
-      @loglevel = $LOGLEVEL || loglevel + 6
       @origin = caller_locations
     end
 
@@ -338,9 +306,7 @@ module Rake::Garden
     end
 
     def skip?
-      if @skip.nil?
-        @skip = File.mtime(@to) >= File.mtime(@from)
-      end
+      @skip = File.mtime(@to) >= File.mtime(@from) if @skip.nil?
       @skip
     end
 
@@ -372,7 +338,7 @@ module Rake::Garden
   class Chore < BaseChore
     def lookup_prerequisite(prerequisite_name) # :nodoc:
       if prerequisite_name == true
-        return NoopChore.new('noop', @application)
+        @force = true
       elsif prerequisite_name.instance_of? String and prerequisite_name.include? "."
         return FileChore.new(prerequisite_name, @application)
       else
@@ -382,7 +348,21 @@ module Rake::Garden
 
     def initialize(task_name, app)
       @queue = []
+      @skipped = 0
       super task_name, app
+    end
+
+    ##
+    # Wait for all task to complete
+    def wait
+      completed = false
+      until completed  do
+        completed = true
+        for cmd in @queue do
+          completed = !cmd.wait.nil? & completed
+        end
+        sleep(0.0001)
+      end
     end
 
     def execute(args=nil)
@@ -392,25 +372,17 @@ module Rake::Garden
       super args
 
       # Once the queue is filled we execute all the waiting commands
-      completed = false
-      until completed  do
-        completed = true
-        for cmd in @queue do
-          completed = !cmd.wait.nil? & completed
-        end
-        sleep(0.00001)
-      end
-      skipped = 0
-      @queue.each do |cmd|
-        cmd.log(@logger)
-        failed if cmd.error?
-        skipped += 1 if cmd.skip?
-      end
+      wait
+
+      @skipped =   @queue.count { |cmd| cmd.skip? }
+      @succedded = @queue.any? { |cmd| cmd.error? }
+
+      @queue.each { |cmd| cmd.log(@logger)}
 
       @logger.info(@logger.line(char:"="))
       result = " Result for #{name.capitalize.bold}: "
       result += "Success? #{@succeeded ? "Yes".green : "No".red}, "
-      result += "Skipped: #{skipped.to_s.yellow}, "
+      result += "Skipped: #{@skipped.to_s.yellow}, "
       result += "Total user time: #{render_time(Time.now - start).blue}, "
       result += "Changed files: #{output_files.length.to_s.bold}"
       @logger.important(result)
@@ -419,8 +391,8 @@ module Rake::Garden
 
     ##
     # We force the execution if the rakefile changed since last execution
-    def force?
-      has_changed(@application.rakefile)
+    def needed?
+       return (has_changed(@application.rakefile) or super)
     end
 
     ##
