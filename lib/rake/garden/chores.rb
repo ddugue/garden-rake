@@ -218,21 +218,25 @@ module Rake::Garden
 
     def initialize(loglevel: 1, workdir: nil, env: nil)
       @workdir = workdir || Dir.pwd
-      @env = env
+      @env = env || {}
       @origin = caller_locations
     end
 
+    ##
+    # Returns wether there was an error in the execution
     def error?
-      @thread and @thread.value.exitstatus != 0
+      false
     end
 
+    ##
+    # Returns wether we should skip execution of this command
     def skip?
       false
     end
 
-    def log(logger)
-      return if !@time
-
+    ##
+    # Log command result
+    def log logger
       pos = render_index @order
       time = render_time(@time)
       prefix_size = pos.length + @linenumber.to_s.length + 10
@@ -240,12 +244,12 @@ module Rake::Garden
       if skip?
         status = 'skipped'
         color = :yellow
-      elsif @thread.value == 0
-        status = 'success'
-        color = :green
-      else
+      elsif error?
         status = 'error'
         color = :red
+      else
+        status = 'success'
+        color = :green
       end
 
       suffix_size = status.length + 7 + 6
@@ -253,15 +257,60 @@ module Rake::Garden
 
       cmd = "'#{truncate(to_s, cmd_size - 1).colorize(color)}'".ljust cmd_size
       logger.info "#{prefix} #{cmd} [#{status.colorize(color)}] ... #{time.to_s.blue} "
+    end
 
+    def run order
+      @order = order
+      @linenumber = get_line_number
+      @time = 0 if skip?
+      self
+    end
+
+    def wait
+      @time = 0
+    end
+
+    def to_s
+      "Abstract Command"
+    end
+
+  end
+
+  ##
+  # Command that wraps an Open3 process
+  class Command < AbstractCommand
+
+    ##
+    # Returns wether there was an error in the execution
+    def error?
+      @thread and @thread.value.exitstatus != 0
+    end
+
+    ##
+    # Wait for process to complete
+    def wait
+      if @time.nil?
+        @time ||= Time.now - @start unless @thread.status
+      end
+      @time
+    end
+
+    def run order
+      @start = Time.now
+      @stdin, @stdout, @stderr, @thread = Open3.popen3(@env, command, :chdir=>@workdir) unless skip?
+      super order
+    end
+
+    def log logger
+      super logger
       if @stdout
-        logger.debug "#{' ' * (pos.length + 1)}Running: #{command}"
+        logger.debug "#{' ' * 7}Running: #{command}"
         for out_line in @stdout.readlines do
-          logger.verbose("#{' ' * (pos.length + 1)}#{out_line.strip}") if out_line.strip.length != 0
+          logger.verbose("#{' ' * 7}#{out_line.strip}") if out_line.strip.length != 0
         end
       end
 
-      if status == 'error'
+      if error?
         logger.error "****** There was an error running #{to_s.bold}: ******"
         stderr = @stderr.read
         if stderr.strip.length != 0
@@ -271,34 +320,18 @@ module Rake::Garden
       end
     end
 
-    def run order
-      @order = order
-      @linenumber = get_line_number
-      @start = Time.now
-      if skip?
-        @time = 0
-      else
-        @stdin, @stdout, @stderr, @thread = Open3.popen3 command
-      end
-      self
-    end
-
-    def wait
-      if @time.nil?
-        @time ||= Time.now - @start unless @thread.status
-      end
-      @time
+    def command
+      ""
     end
 
     def to_s
       command
     end
-
   end
 
   ##
   # Abstract command that wraps a cp
-  class CopyCommand < AbstractCommand
+  class CopyCommand < Command
     def initialize(from, to, *args)
       @from = from
       @to = to
@@ -320,8 +353,21 @@ module Rake::Garden
   end
 
   ##
+  # Command that represents a change directory
+  class ChangedirectoryCommand < AbstractCommand
+    def initialize(to, *args)
+      @to = to
+    end
+
+    def to_s
+      @to << '/' unless @to.end_with? '/'
+      "Changing directory to #{@to}"
+    end
+  end
+
+  ##
   # Command that wraps a sh
-  class ShCommand < AbstractCommand
+  class ShCommand < Command
     def initialize(cmd, *args)
       @cmd = cmd
       super *args
@@ -349,6 +395,7 @@ module Rake::Garden
     def initialize(task_name, app)
       @queue = []
       @skipped = 0
+      @workdir = Pathname.new(Pathname.pwd)
       super task_name, app
     end
 
@@ -375,7 +422,7 @@ module Rake::Garden
       wait
 
       @skipped =   @queue.count { |cmd| cmd.skip? }
-      @succedded = @queue.any? { |cmd| cmd.error? }
+      @succeeded = !@queue.any? { |cmd| cmd.error? }
 
       @queue.each { |cmd| cmd.log(@logger)}
 
@@ -399,8 +446,16 @@ module Rake::Garden
     # Queue command for execution
     def queue(command)
       @command_index += 1
+      command.workdir = @workdir
       @logger.debug("#{render_index @command_index} Queuing '#{command.to_s}'")
       @queue << command.run(@command_index)
+    end
+
+    ##
+    # Change directory
+    def cd(dir)
+      @workdir = @workdir.join(dir)
+      queue ChangedirectoryCommand.new(dir)
     end
 
     ##
