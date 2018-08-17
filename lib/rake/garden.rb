@@ -1,4 +1,5 @@
 $DEBUG ||= ENV.fetch("DEBUG", "false") == "true"
+
 # $METADATA ||= ENV.fetch("METADATA", $DEBUG ? ".garden.json" : ".garden")
 
 $METADATA ||= '.garden.json'

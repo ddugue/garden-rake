@@ -6,8 +6,19 @@ require 'json'
 require 'pathname'
 require 'colorize'
 # require "rbtrace"
-module Rake::Garden
 
+# TODO:
+## Move output file to cmd
+## Split files
+## Create nice logging of chores
+## Replace force? with needed? everywhere
+## Create Cmd for  mv, sh!
+## Create Cmd for sh
+## Add command set for env
+## Add cd for AbstractCmd
+## Think about a way to add flags to build rake cmd
+## Cleanup other files
+module Rake::Garden
   ##
   # Recursive datastructure to fetch data from a metadata file
   ##
@@ -72,7 +83,9 @@ module Rake::Garden
       @files = nil
       @output_files = FileSet.new
       @metadata = metadata().namespace(task_name)
-      @last_executed = Time.at(@metadata.fetch('last_executed', 0))
+      @last_executed = Time.at(@metadata.fetch('last_executed', 0) || 0)
+      @command_index = 0 # Reference for command execution
+      @logger = Logger.new(level:Logger::VERBOSE)
       super task_name, app
     end
 
@@ -90,7 +103,6 @@ module Rake::Garden
         end
     end
 
-
     def execute(args=nil)
       args ||= EMPTY_TASK_ARGS
       if application.options.dryrun
@@ -102,7 +114,6 @@ module Rake::Garden
 
       # Instance exec decorate the context of the lambda with self methods
       @actions.each { |act| self.instance_exec(self, args, &act) }
-      @metadata["last_executed"] = Time.now().to_i
     end
 
     ##
@@ -119,10 +130,24 @@ module Rake::Garden
       false
     end
 
+    ##
+    # Set the task as a failure
+    def failed
+      @succeeded = false
+    end
+
+    def invoke_with_call_chain(*args)
+      @succeeded = true
+      super *args
+      @logger.flush
+      @metadata["last_executed"] = Time.now().to_i if @succeeded and needed?
+      exit(1) if !@succeeded
+    end
+
     def needed?
       needed = prerequisite_tasks.empty? || force?
       prerequisite_tasks.each do |t|
-        puts "Checking if #{t} has changed"
+        # puts "Checking if #{t} has changed"
         if t.is_a? BaseChore
           needed ||= t.force?
           needed ||= !t.output_files.find_index {|f| has_changed(f) }.nil?
@@ -132,7 +157,7 @@ module Rake::Garden
         end
         return needed if needed
       end
-      puts "Skipping #{name}" if !needed
+      @logger.important(" Skipping task: #{name.capitalize.bold}") if !needed
       needed
     end
 
@@ -170,68 +195,257 @@ module Rake::Garden
   end
 
   ##
+  # Return the first line number found
+  def get_line_number
+    caller_locations.find { |loc| loc.path.include? 'rakefile' }.lineno
+  end
+
+  ##
+  # Render a time with max 6 char
+  def render_time(time)
+    if time < 10
+      "#{time.round(3)}s"
+    elsif time >= 3600
+      "#{(time / 3600).floor}h#{(time % 3600 / 60).floor.to_s.ljust(2, "0")}m"
+    elsif time >= 60
+      "#{(time / 60).floor}m#{(time % 60).floor}s"
+    else
+      "#{time.round(2)}s"
+    end
+  end
+
+  ##
+  # Render a single index
+  def render_index(nb, nbdigits: 3)
+    "[#{nb}]".rjust nbdigits + 3
+  end
+
+  ##
+  # Crop a long string with ...
+  def truncate s, length = 30, ellipsis = '...'
+    if s.length > length
+      s.to_s[0..length].gsub(/[^\w]\w+\s*$/, ellipsis)
+    else
+      s
+    end
+  end
+
+  class Logger
+    NONE = 0 # Log only errors
+    IMPORTANT = 1 # Log only basic information
+    INFO = 2 # Log execution information
+    VERBOSE = 3 # Output all stdout
+    DEBUG = 4 # Output garden debug information as well
+    attr_accessor :level # Log level of the Logger
+
+    def initialize(level: INFO)
+      @level = level
+      @output = []
+      @errors = []
+    end
+
+    ##
+    # Return terminal width
+    def terminal_width
+      Rake.application.terminal_width
+    end
+
+    ##
+    # Return a line of character
+    def line(char: '-')
+      char * (terminal_width - 2)
+    end
+
+    ##
+    # Return a string padded with space
+    # Left: number of char to the left
+    # Rigth: size of the text to the right default to text length
+    def align_right(text, left: 0, right: nil)
+      " " * (terminal_width - 1 - left - (right || text.length)) + text
+    end
+
+    def join(strings)
+      sep = $\ || "\n"
+      strings.map { |s|
+        next if s.nil?
+        s.end_with?(sep) ? s : s + sep
+      }.join
+    end
+
+    ##
+    # Print output to stdout
+    def flush
+      $stdout.print(join(@output))
+      $stderr.print(join(@errors))
+      @output.clear
+      @errors.clear
+    end
+
+    ##
+    # Outputs error to stderr
+    def error(txt)
+      @errors << txt.red
+    end
+
+    ##
+    # Outputs important information to stdout
+    def important(txt)
+      @output << txt if @level >= IMPORTANT
+    end
+
+    ##
+    # Outputs information to stdout
+    def info(txt)
+      @output << txt if @level >= INFO
+    end
+
+    ##
+    # Outputs additional information to stdout
+    def verbose(txt)
+      @output << txt.light_black if @level >= VERBOSE
+    end
+
+    ##
+    # Outputs debug information to stdout
+    def debug(txt)
+      @output << txt.light_black if @level >= DEBUG
+    end
+
+  end
+  ##
   # AbstractCmd represent an abstract command that can be queued and run
-  class AbstractCmd
+  class AbstractCommand
 
     # FileSet of input files
     attr_accessor :input_files
 
-    # Fileset of output filse
+    # Fileset of output files
     attr_accessor :output_files
 
-    def initialize(order, origin, loglevel: nil, workdir: nil, env: nil)
-      @order = order
+    attr_writer :workdir  # Workdirectory for command
+    attr_writer :env      # Environment variable
+    attr_writer :origin   # Origin of the cmd in the rakefile (for debug purpose)
+    attr_writer :loglevel # Log Level for messages
+
+    def initialize(origin: nil, loglevel: 1, workdir: nil, env: nil)
       @origin = origin
-      @loglevel = loglevel || nil
-      @workdir = workdir || nil
-      @env = env || nil
-    end
-
-    def log(total)
-      "[  ORDER/TOTAL] rakefile:BoldL32Bold - GreenCMDEndGreen    ... blue0.007sblue"
-      " *** Error or output grey or red ***"
-      "full cmd"
-      "starts log"
-    end
-    def debug(msg)
-      $stdout.puts msg.grey
-    end
-
-    def success(msg)
-      $stdout.print
-    end
-
-
-    def execution_time
-      @thread.times
-    end
-
-    def run
-      @stdin, @stdout, @stderr, @thread = Open3.popen3 cmd
-    end
-
-    def wait
-      @thread.value
+      @workdir = workdir || Dir.pwd
+      @env = env
+      @loglevel = $LOGLEVEL || loglevel + 6
+      @origin = caller_locations
     end
 
     def error?
-      @thread.value != 0
+      @thread and @thread.value.exitstatus != 0
     end
 
-    def error
-      @stderr.string if @thread.value != 0
+    def skip?
+      false
     end
 
-    def log
-      @stdout.string
+    def log(logger)
+      return if !@time
+
+      pos = render_index @order
+      time = render_time(@time)
+      prefix_size = pos.length + @linenumber.to_s.length + 10
+      prefix = "#{pos} rakefile:#{@linenumber.to_s.bold}"
+      if skip?
+        status = 'skipped'
+        color = :yellow
+      elsif @thread.value == 0
+        status = 'success'
+        color = :green
+      else
+        status = 'error'
+        color = :red
+      end
+
+      suffix_size = status.length + 7 + 6
+      cmd_size = logger.terminal_width - (2 + 4 + suffix_size + prefix_size) + 15
+
+      cmd = "'#{truncate(to_s, cmd_size - 1).colorize(color)}'".ljust cmd_size
+      logger.info "#{prefix} #{cmd} [#{status.colorize(color)}] ... #{time.to_s.blue} "
+
+      if @stdout
+        logger.debug "#{' ' * (pos.length + 1)}Running: #{command}"
+        for out_line in @stdout.readlines do
+          logger.verbose("#{' ' * (pos.length + 1)}#{out_line.strip}") if out_line.strip.length != 0
+        end
+      end
+
+      if status == 'error'
+        logger.error "****** There was an error running #{to_s.bold}: ******"
+        stderr = @stderr.read
+        if stderr.strip.length != 0
+          logger.error stderr
+          logger.error " "
+        end
+      end
     end
 
-    def print
-      @stdout.each_line { |line| puts line }
+    def run order
+      @order = order
+      @linenumber = get_line_number
+      @start = Time.now
+      if skip?
+        @time = 0
+      else
+        @stdin, @stdout, @stderr, @thread = Open3.popen3 command
+      end
+      self
+    end
+
+    def wait
+      if @time.nil?
+        @time ||= Time.now - @start unless @thread.status
+      end
+      @time
+    end
+
+    def to_s
+      command
     end
 
   end
 
+  ##
+  # Abstract command that wraps a cp
+  class CopyCommand < AbstractCommand
+    def initialize(from, to, *args)
+      @from = from
+      @to = to
+      super *args
+    end
+
+    def skip?
+      if @skip.nil?
+        @skip = File.mtime(@to) >= File.mtime(@from)
+      end
+      @skip
+    end
+
+    def to_s
+      "Copying #{@from} to #{@to}"
+    end
+
+    def command
+      "mkdir -p #{Pathname.new(@to).dirname} && cp #{@from} #{@to}"
+    end
+  end
+
+  ##
+  # Command that wraps a sh
+  class ShCommand < AbstractCommand
+    def initialize(cmd, *args)
+      @cmd = cmd
+      super *args
+    end
+
+    def command
+      @cmd
+    end
+  end
 
   ##
   # Chore that decorate
@@ -253,12 +467,35 @@ module Rake::Garden
     end
 
     def execute(args=nil)
+      @logger.info " "
+      @logger.important " Running Task: " + name.capitalize.bold
+      start = Time.now
       super args
+
       # Once the queue is filled we execute all the waiting commands
-      @queue.each do |cmd|
-        cmd.wait
-        cmd.print
+      completed = false
+      until completed  do
+        completed = true
+        for cmd in @queue do
+          completed = !cmd.wait.nil? & completed
+        end
+        sleep(0.00001)
       end
+      skipped = 0
+      @queue.each do |cmd|
+        cmd.log(@logger)
+        failed if cmd.error?
+        skipped += 1 if cmd.skip?
+      end
+
+      @logger.info(" " + "=" * (@logger.terminal_width - 2) + " ")
+      result = " Result for #{name.capitalize.bold}: "
+      result += "Success? #{@succeeded ? "Yes".green : "No".red}, "
+      result += "Skipped: #{skipped.to_s.yellow}, "
+      result += "Total user time: #{render_time(Time.now - start).blue}, "
+      result += "Changed files: #{output_files.length.to_s.bold}"
+      @logger.important(result)
+      @logger.info(" ")
     end
 
     ##
@@ -267,22 +504,25 @@ module Rake::Garden
       has_changed(@application.rakefile)
     end
 
-    def queue(cmd)
-      @queue << CmdExecutor.new(cmd)
+    ##
+    # Queue command for execution
+    def queue(command)
+      @command_index += 1
+      @logger.debug("#{render_index @command_index} Queuing '#{command.to_s}'")
+      @queue << command.run(@command_index)
     end
 
+    ##
+    # Copy file -> location
     def cp(f, name)
       name.magic_format if name.respond_to? :magic_format
-      if has_changed(f)
-        puts "Queuing cp #{f} #{name}"
-        queue "mkdir -p #{Pathname.new(name).dirname} && cp #{f} #{name}"
-        @output_files << name
-      end
+      queue CopyCommand.new(f, name)
     end
 
+    ##
+    # Run a shell command
     def sh(cmd)
-      puts "Queuing #{cmd}"
-      queue cmd
+      queue ShCommand.new(cmd)
     end
 
     class << self
