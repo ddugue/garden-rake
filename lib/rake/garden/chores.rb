@@ -18,6 +18,8 @@ require 'colorize'
 ## Add cd for AbstractCmd
 ## Think about a way to add flags to build rake cmd
 ## Cleanup other files
+## Think about the cd && and the set &&
+## Think about overriding > for nice effect with sh
 module Rake::Garden
   ##
   # Recursive datastructure to fetch data from a metadata file
