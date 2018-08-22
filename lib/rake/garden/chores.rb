@@ -12,12 +12,11 @@ require 'colorize'
 ## Split files
 ## Create Cmd for  mv, sh!
 ## Create Cmd for sh
-## Add command set for env
-## Add cd for AbstractCmd
 ## Think about a way to add flags to build rake cmd
 ## Cleanup other files
 ## Think about the cd && and the set &&
 ## Think about overriding >> for nice effect with sh
+## Think about getting output from command
 module Rake::Garden
   ##
   # Recursive datastructure to fetch data from a metadata file
@@ -274,6 +273,10 @@ module Rake::Garden
       "Abstract Command"
     end
 
+    def output_files
+      nil
+    end
+
   end
 
   ##
@@ -349,6 +352,10 @@ module Rake::Garden
 
     def command
       "mkdir -p #{Pathname.new(@to).dirname} && cp #{@from} #{@to}"
+    end
+
+    def output_files
+      @skip ? nil : FileSet.new([@to])
     end
   end
 
@@ -453,6 +460,11 @@ module Rake::Garden
 
       @queue.each { |cmd| cmd.log(@logger)}
 
+      @output_files = @queue \
+                        .map { |cmd| cmd.output_files } \
+                        .reject { |cmd| cmd.nil? } \
+                        .reduce(FileSet.new, :+)
+
       @logger.info(@logger.line(char:"="))
       result = " Result for #{name.capitalize.bold}: "
       result += "Success? #{@succeeded ? "Yes".green : "No".red}, "
@@ -477,6 +489,7 @@ module Rake::Garden
       command.env = @env.clone
       @logger.debug("#{render_index @command_index} Queuing '#{command.to_s}'")
       @queue << command.run(@command_index)
+      command
     end
 
     ##
@@ -491,7 +504,7 @@ module Rake::Garden
         raise "Set argument must be an hash" if not args[0].is_a? Hash
         dict = Hash[args[0].map { |k, v| [k.to_s, v.to_s] }]
       else
-        raise 'Invalid syntak for set. Please see docs'
+        raise 'Invalid syntax for set. Please see docs'
       end
       @env.merge! dict
       queue SetCommand.new(dict)
