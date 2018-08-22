@@ -48,6 +48,8 @@ module Rake::Garden
         end
     end
 
+    ##
+    # Override execute to decorate the contex with self instance method
     def execute(args=nil)
       args ||= EMPTY_TASK_ARGS
       if application.options.dryrun
@@ -59,6 +61,12 @@ module Rake::Garden
 
       # Instance exec decorate the context of the lambda with self methods
       @actions.each { |act| self.instance_exec(self, args, &act) }
+    end
+
+    ##
+    # Since we are not executing with the normal context, [1] will try the command [] which does not exist
+    def [](index)
+      Array.new([index])
     end
 
     ##
@@ -224,6 +232,11 @@ module Rake::Garden
     # Run a shell command
     def sh(cmd)
       queue ShCommand.new(cmd)
+    end
+
+    def check(cmd)
+      puts "INSIDE T"
+      puts cmd.to_s
     end
 
     class << self

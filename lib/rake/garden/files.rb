@@ -62,6 +62,23 @@ module Rake::Garden
         with_file f, &block
       end
     end
-  end
 
+    def >>(other)
+      [self, other]
+    end
+  end
+end
+
+class String
+  def >>(other)
+    [self, other]
+  end
+end
+class Array
+  def >>(other)
+    if self.length == 1
+      [self, other]
+    end
+    self << other
+  end
 end
