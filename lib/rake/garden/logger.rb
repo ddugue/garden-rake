@@ -25,6 +25,36 @@ module Rake::Garden
     end
 
     ##
+    # Render a time with max 6 char
+    def render_time(time)
+      if time < 10
+        "#{time.round(3)}s"
+      elsif time >= 3600
+        "#{(time / 3600).floor}h#{(time % 3600 / 60).floor.to_s.ljust(2, "0")}m"
+      elsif time >= 60
+        "#{(time / 60).floor}m#{(time % 60).floor}s"
+      else
+        "#{time.round(2)}s"
+      end
+    end
+
+    ##
+    # Render a single index
+    def render_index(nb, nbdigits: 3)
+      "[#{nb}]".rjust nbdigits + 3
+    end
+
+    ##
+    # Crop a long string with ...
+    def truncate_s s, length = 30, ellipsis = '...'
+      if s.length > length
+        s.to_s[0..length].gsub(/[^\w]\w+\s*$/, ellipsis)
+      else
+        s
+      end
+    end
+
+    ##
     # Return a line of character
     def line(char: '-')
       " " + char * (terminal_width - 2) + " "

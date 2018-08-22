@@ -8,15 +8,13 @@ require 'colorize'
 # require "rbtrace"
 
 # TODO:
-## Split files
 ## Create Cmd for mv, sh!
 ## Create Cmd for sh
 ## Think about a way to add flags to build rake cmd
-## Cleanup other files
-## Think about the cd && and the set &&
+## Think about the cd && and the set && IMPOSSIBE
 ## Think about overriding >> for nice effect with sh
-## Think about getting output from command
 ## Add files command to proxy FileSet
+## Think about a :ignore flag for command to allow failure
 module Rake::Garden
   ##
   # A chore is a task you do not want to execute or the execute it as needed
@@ -33,7 +31,7 @@ module Rake::Garden
       @command_index = 0 # Reference for command execution, see queue
       @logger = Logger.new(level:Logger::VERBOSE)
       @force = false # Wether to force the task to execute
-      super task_name, app
+      super
     end
 
     ##
@@ -72,7 +70,7 @@ module Rake::Garden
 
     def invoke_with_call_chain(*args)
       @succeeded = true
-      super *args
+      super
       @logger.flush
       @metadata["last_executed"] = Time.now().to_i if @succeeded and needed?
       exit(1) if !@succeeded
@@ -111,47 +109,15 @@ module Rake::Garden
     end
   end
 
-  ##
-  # Return the first line number found
-  def get_line_number
-    caller_locations.find { |loc| loc.path.include? 'rakefile' }.lineno
-  end
-
-  ##
-  # Render a time with max 6 char
-  def render_time(time)
-    if time < 10
-      "#{time.round(3)}s"
-    elsif time >= 3600
-      "#{(time / 3600).floor}h#{(time % 3600 / 60).floor.to_s.ljust(2, "0")}m"
-    elsif time >= 60
-      "#{(time / 60).floor}m#{(time % 60).floor}s"
-    else
-      "#{time.round(2)}s"
-    end
-  end
-
-  ##
-  # Render a single index
-  def render_index(nb, nbdigits: 3)
-    "[#{nb}]".rjust nbdigits + 3
-  end
-
-  ##
-  # Crop a long string with ...
-  def truncate s, length = 30, ellipsis = '...'
-    if s.length > length
-      s.to_s[0..length].gsub(/[^\w]\w+\s*$/, ellipsis)
-    else
-      s
-    end
-  end
-
 
   ##
   # Chore that decorate
   ##
   class Chore < BaseChore
+
+    attr_accessor :workdir # Actual work directory of the chore
+    attr_accessor :env     # Environment variable passed to commands
+
     def lookup_prerequisite(prerequisite_name) # :nodoc:
       if prerequisite_name == true
         @force = true
@@ -167,7 +133,7 @@ module Rake::Garden
       @skipped = 0
       @workdir = Pathname.new(Pathname.pwd)
       @env = {}
-      super task_name, app
+      super
     end
 
     ##
@@ -206,7 +172,7 @@ module Rake::Garden
       result = " Result for #{name.capitalize.bold}: "
       result += "Success? #{@succeeded ? "Yes".green : "No".red}, "
       result += "Skipped: #{@skipped.to_s.yellow}, "
-      result += "Total user time: #{render_time(Time.now - start).blue}, "
+      result += "Total user time: #{@logger.render_time(Time.now - start).blue}, "
       result += "Changed files: #{output_files.length.to_s.bold}"
       @logger.important(result)
       @logger.info(" ")
@@ -224,7 +190,7 @@ module Rake::Garden
       @command_index += 1
       command.workdir = @workdir
       command.env = @env.clone
-      @logger.debug("#{render_index @command_index} Queuing '#{command.to_s}'")
+      @logger.debug("#{@logger.render_index @command_index} Queuing '#{command.to_s}'")
       @queue << command.run(@command_index)
       command
     end
@@ -233,39 +199,24 @@ module Rake::Garden
     # Set variable environment
     # Can be used like set :VAR => value or set :VAR, value or set VAR:value
     def set(*args)
-      if args.length > 1
-        # first arg is a symbol, second is value
-        dict = {args[0].to_s => args[1].to_s}
-      elsif args.length == 1
-        # first arg is a dict
-        raise "Set argument must be an hash" if not args[0].is_a? Hash
-        dict = Hash[args[0].map { |k, v| [k.to_s, v.to_s] }]
-      else
-        raise 'Invalid syntax for set. Please see docs'
-      end
-      @env.merge! dict
-      queue SetCommand.new(dict)
+      queue SetCommand.new(self, *args)
     end
 
     ##
     # Unset an environment variable
     def unset(var)
-      @env.delete var
-      queue UnsetCommand.new(var)
+      queue UnsetCommand.new(self, var)
     end
 
     ##
     # Change directory
     def cd(dir)
-      dir << '/' unless dir.end_with? '/'
-      @workdir = @workdir.join(dir)
-      queue ChangedirectoryCommand.new(dir)
+      queue ChangedirectoryCommand.new(self, dir)
     end
 
     ##
     # Copy file -> location
     def cp(f, name)
-      name.magic_format if name.respond_to? :magic_format
       queue CopyCommand.new(f, name)
     end
 

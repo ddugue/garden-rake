@@ -36,8 +36,8 @@ module Rake::Garden
     ##
     # Log command result
     def log logger
-      pos = render_index @order
-      time = render_time(@time)
+      pos = logger.render_index @order
+      time = logger.render_time(@time)
       prefix_size = pos.length + @linenumber.to_s.length + 10
       prefix = "#{pos} rakefile:#{@linenumber.to_s.bold}"
       if skip?
@@ -54,26 +54,43 @@ module Rake::Garden
       suffix_size = status.length + 7 + 6
       cmd_size = logger.terminal_width - (2 + 4 + suffix_size + prefix_size) + 15
 
-      cmd = "'#{truncate(to_s, cmd_size - 1).colorize(color)}'".ljust cmd_size
+      cmd = "'#{logger.truncate_s(to_s, cmd_size - 1).colorize(color)}'".ljust cmd_size
       logger.info "#{prefix} #{cmd} [#{status.colorize(color)}] ... #{time.to_s.blue} "
     end
 
+    ##
+    # Run the command
+    # We don't include it in initialize. It allows to set up some intermediary variable
     def run order
       @order = order
-      @linenumber = get_line_number
+      @linenumber = caller_locations.find { |loc| loc.path.include? 'rakefile' }.lineno
       @time = 0 if skip?
       self
     end
 
+    ##
+    # Wait and set the time it took to execute
+    # Does not actually wait for the command to complete. Sets the time if the command
+    # completed. By default it is instataneous. Will return nil if command is not done
     def wait
       @time = 0
     end
 
+    ##
+    # Render a readeable version of the command
     def to_s
       "Abstract Command"
     end
 
+    ##
+    # Return the affected file of this command
     def output_files
+      nil
+    end
+
+    ##
+    # Wait and return the result of this command
+    def result
       nil
     end
   end
@@ -89,6 +106,12 @@ module Rake::Garden
     end
 
     ##
+    # Returns wether the execution is done and successful
+    def success?
+      @thread and @thread.value.exitstatus == 0
+    end
+
+    ##
     # Wait for process to complete
     def wait
       if @time.nil?
@@ -100,11 +123,11 @@ module Rake::Garden
     def run order
       @start = Time.now
       @stdin, @stdout, @stderr, @thread = Open3.popen3(@env, command, :chdir=>@workdir) unless skip?
-      super order
+      super
     end
 
     def log logger
-      super logger
+      super
       if @stdout
         logger.debug "#{' ' * 7}Running: #{command}"
         for out_line in @stdout.readlines do
@@ -122,6 +145,14 @@ module Rake::Garden
       end
     end
 
+    def result
+      while @time.nil?
+        wait
+        sleep(0.01)
+      end
+      @stdout
+    end
+
     def command
       ""
     end
@@ -134,10 +165,12 @@ module Rake::Garden
   ##
   # Abstract command that wraps a cp
   class CopyCommand < Command
-    def initialize(from, to, *args)
+    def initialize(from, to)
+      to.magic_format if to.respond_to? :magic_format
+
       @from = from
       @to = to
-      super *args
+      super()
     end
 
     def skip?
@@ -162,8 +195,19 @@ module Rake::Garden
   # Command that sets an environment variable
   # We mostly create a command for logging purpose
   class SetCommand < AbstractCommand
-    def initialize(dict, *args)
-      @dict = dict
+    def initialize(task, *args)
+      if args.length > 1
+        # first arg is a symbol, second is value
+        @dict = {args[0].to_s => args[1].to_s}
+      elsif args.length == 1
+        # first arg is a dict
+        raise "Set argument must be an hash" if not args[0].is_a? Hash
+        @dict = Hash[args[0].map { |k, v| [k.to_s, v.to_s] }]
+      else
+        raise 'Invalid syntax for set. Please see docs'
+      end
+
+      task.env.merge! @dict
     end
 
     def to_s
@@ -176,8 +220,9 @@ module Rake::Garden
   # Unsetcommand unset an environment variable
   # We mostly create a command for logging purpose
   class UnsetCommand < AbstractCommand
-    def initialize(var, *args)
+    def initialize(task, var)
       @var = var
+      task.env.delete @var
     end
 
     def to_s
@@ -188,8 +233,10 @@ module Rake::Garden
   ##
   # Command that represents a change directory
   class ChangedirectoryCommand < AbstractCommand
-    def initialize(to, *args)
+    def initialize(task, to)
       @to = to
+      @to << '/' unless @to.end_with? '/'
+      task.workdir = task.workdir.join(@to)
     end
 
     def to_s
@@ -200,9 +247,11 @@ module Rake::Garden
   ##
   # Command that wraps a sh
   class ShCommand < Command
-    def initialize(cmd, *args)
+    def initialize(cmd)
+      cmd.magic_format if cmd.respond_to? :magic_format
+
       @cmd = cmd
-      super *args
+      super()
     end
 
     def command
