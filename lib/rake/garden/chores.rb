@@ -8,7 +8,6 @@ require 'colorize'
 # require "rbtrace"
 
 # TODO:
-## Move output file to cmd
 ## Split files
 ## Create Cmd for  mv, sh!
 ## Create Cmd for sh
@@ -18,58 +17,6 @@ require 'colorize'
 ## Think about overriding >> for nice effect with sh
 ## Think about getting output from command
 module Rake::Garden
-  ##
-  # Recursive datastructure to fetch data from a metadata file
-  ##
-  class TreeDict
-    def initialize(data=nil, parent=nil)
-      @data = data || Hash.new
-      @parent = parent
-      @namespaces = Hash.new
-    end
-
-    ##
-    # Return a sub division of this datastructure
-    def namespace(name)
-      return @namespaces[name.to_s] if @namespaces.key? name.to_s
-      if @data.key? name.to_s
-        @namespaces[name.to_s] = TreeDict.new(@data[name.to_s], self)
-      else
-        @namespaces[name.to_s] = TreeDict.new(nil, self)
-      end
-    end
-
-    ##
-    # Return a single hash data tree
-    ##
-    def to_json(*)
-      @data.merge(@namespaces).to_json()
-    end
-
-    def save
-      @parent.save if @parent
-    end
-
-    def [](ind); @data[ind]; end
-    def []=(ind, value); @data[ind] = value; end
-    def key?(key); @data.key? key; end
-    def fetch(value, default); @data.fetch(value, default); end
-  end
-
-  class JSONMetadata < TreeDict
-    def initialize(filename)
-      @filename = filename
-      d = JSON.load(File.read(@filename)) if File.file?(@filename)
-      super d
-    end
-
-    def save()
-      File.open @filename, "w+" do |file|
-        JSON.dump(self, file)
-      end
-    end
-  end
-
   ##
   # A chore is a task you do not want to execute or the execute it as needed
   # It tries to evaluate wether it should be executed or net
