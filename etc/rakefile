@@ -14,6 +14,8 @@ chore :bam => ["copy/*.txt"] do |t|
     cd "sub"
     sh "cat 7.txt.2.txt"
     cd ".."
+    set PROBLEM: 'no'
+    sh "echo $PROBLEM"
   end
 end
 

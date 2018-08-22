@@ -10,8 +10,6 @@ require 'colorize'
 # TODO:
 ## Move output file to cmd
 ## Split files
-## Create nice logging of chores
-## Replace force? with needed? everywhere
 ## Create Cmd for  mv, sh!
 ## Create Cmd for sh
 ## Add command set for env
@@ -19,7 +17,7 @@ require 'colorize'
 ## Think about a way to add flags to build rake cmd
 ## Cleanup other files
 ## Think about the cd && and the set &&
-## Think about overriding > for nice effect with sh
+## Think about overriding >> for nice effect with sh
 module Rake::Garden
   ##
   # Recursive datastructure to fetch data from a metadata file
@@ -355,6 +353,33 @@ module Rake::Garden
   end
 
   ##
+  # Command that sets an environment variable
+  # We mostly create a command for logging purpose
+  class SetCommand < AbstractCommand
+    def initialize(dict, *args)
+      @dict = dict
+    end
+
+    def to_s
+      a = @dict.to_a
+      "Setting up flag #{a[0][0]} to #{a[0][1]}"
+    end
+  end
+
+  ##
+  # Unsetcommand unset an environment variable
+  # We mostly create a command for logging purpose
+  class UnsetCommand < AbstractCommand
+    def initialize(var, *args)
+      @var = var
+    end
+
+    def to_s
+      "Unsetting up flag #{@var}"
+    end
+  end
+
+  ##
   # Command that represents a change directory
   class ChangedirectoryCommand < AbstractCommand
     def initialize(to, *args)
@@ -362,7 +387,6 @@ module Rake::Garden
     end
 
     def to_s
-      @to << '/' unless @to.end_with? '/'
       "Changing directory to #{@to}"
     end
   end
@@ -398,6 +422,7 @@ module Rake::Garden
       @queue = []
       @skipped = 0
       @workdir = Pathname.new(Pathname.pwd)
+      @env = {}
       super task_name, app
     end
 
@@ -449,13 +474,40 @@ module Rake::Garden
     def queue(command)
       @command_index += 1
       command.workdir = @workdir
+      command.env = @env.clone
       @logger.debug("#{render_index @command_index} Queuing '#{command.to_s}'")
       @queue << command.run(@command_index)
     end
 
     ##
+    # Set variable environment
+    # Can be used like set :VAR => value or set :VAR, value or set VAR:value
+    def set(*args)
+      if args.length > 1
+        # first arg is a symbol, second is value
+        dict = {args[0].to_s => args[1].to_s}
+      elsif args.length == 1
+        # first arg is a dict
+        raise "Set argument must be an hash" if not args[0].is_a? Hash
+        dict = Hash[args[0].map { |k, v| [k.to_s, v.to_s] }]
+      else
+        raise 'Invalid syntak for set. Please see docs'
+      end
+      @env.merge! dict
+      queue SetCommand.new(dict)
+    end
+
+    ##
+    # Unset an environment variable
+    def unset(var)
+      @env.delete var
+      queue UnsetCommand.new(var)
+    end
+
+    ##
     # Change directory
     def cd(dir)
+      dir << '/' unless dir.end_with? '/'
       @workdir = @workdir.join(dir)
       queue ChangedirectoryCommand.new(dir)
     end
