@@ -15,6 +15,7 @@ require 'colorize'
 ## Think about overriding >> for nice effect with sh
 ## Add files command to proxy FileSet
 ## Think about a :ignore flag for command to allow failure
+## Move ShArgs to command subclass
 module Rake::Garden
   ##
   # A chore is a task you do not want to execute or the execute it as needed
@@ -235,7 +236,7 @@ module Rake::Garden
     end
 
     def check(cmd)
-      puts "INSIDE T"
+      puts "Check: input (#{cmd.input}), command (#{cmd.command}), output (#{cmd.output})"
       puts cmd.to_s
     end
 

@@ -1,84 +1,97 @@
 
 module Rake::Garden
   ##
-  # Proxy for Dir Glob that decorates string with
-  # a magic format method
-  ##
-  def directories(path, &block)
-    Dir.glob(path).each do |f|
-      String.send(:define_method, :magic_format) do
-        self.gsub! /%[fnpxdX]/ do |s|
-          case s.to_s
-          when '%f'
-            File.basename(f)
-          when '%n'
-            f.pathmap('%n')
-          when '%x'
-            File.extname(f)
-          when '%d'
-            File.dirname(f)
-          when '%X'
-            f.pathmap('%X')
-          when '%p'
-            f
-          end
-        end
-      end
-      block.call f
-    end
-  end
-
-  ##
   # Decorator function to allow string interpolation of filenames
   ##
   def with_file(f, &block)
-      String.send(:define_method, :magic_format) do
-        self.gsub! /%[fnpxdX]/ do |s|
-          case s.to_s
-          when '%f'
-            File.basename(f)
-          when '%n'
-            f.pathmap('%n')
-          when '%x'
-            File.extname(f)
-          when '%d'
-            File.dirname(f)
-          when '%X'
-            f.pathmap('%X')
-          when '%p'
-            f
-          end
+    String.send(:define_method, :_format_with_file) do
+      self.gsub! /%[fnpxdX]/ do |s|
+        case s.to_s
+        when '%f'
+          File.basename(f)
+        when '%n'
+          f.pathmap('%n')
+        when '%x'
+          File.extname(f)
+        when '%d'
+          File.dirname(f)
+        when '%X'
+          f.pathmap('%X')
+        when '%p'
+          f
         end
       end
-      block.call f
+    end
+    block.call f
+    String.remove_method(:_format_with_file)
   end
 
   ##
   # Class used to decorate the each method with our magic_format method
   ##
   class FileSet < Set
+    ##
+    # Fix to prevent ruby from memoizing magic_format when calling any?
+    def any?
+      super
+      String.remove_method(:_format_with_file)
+    end
+
     def each(&block)
       super do |f|
         with_file f, &block
       end
     end
 
+    def format_with_file!
+      self
+    end
+
     def >>(other)
-      [self, other]
+      ShArgs.new self.format_with_file!, other.format_with_file!
     end
   end
 end
 
-class String
+##
+# Small data structure to pass Arguments to an SH Command
+class ShArgs
+  attr_reader :input
+  attr_reader :command
+  attr_reader :output
+
+  def initialize(input, cmd)
+    @input = input or nil
+    @command = cmd
+  end
+
   def >>(other)
-    [self, other]
+    @output = other
+    self
   end
 end
-class Array
-  def >>(other)
-    if self.length == 1
-      [self, other]
+
+class String
+  ##
+  # Method that is set on a string to format it with file
+  def format_with_file!
+    unless self.frozen?
+      self._format_with_file if self.respond_to? :_format_with_file
     end
-    self << other
+    self
+  end
+
+  def >>(other)
+    ShArgs.new self.format_with_file!, other.format_with_file!
+  end
+end
+
+class Array
+  def format_with_file!
+    self.map(&:format_with_file!)
+  end
+
+  def >>(other)
+    ShArgs.new self.format_with_file!, other.format_with_file!
   end
 end

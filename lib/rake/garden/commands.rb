@@ -166,10 +166,8 @@ module Rake::Garden
   # Abstract command that wraps a cp
   class CopyCommand < Command
     def initialize(from, to)
-      to.magic_format if to.respond_to? :magic_format
-
       @from = from
-      @to = to
+      @to = to.format_with_file!
       super()
     end
 
@@ -248,9 +246,7 @@ module Rake::Garden
   # Command that wraps a sh
   class ShCommand < Command
     def initialize(cmd)
-      cmd.magic_format if cmd.respond_to? :magic_format
-
-      @cmd = cmd
+      @cmd = cmd.format_with_file!
       super()
     end
 
