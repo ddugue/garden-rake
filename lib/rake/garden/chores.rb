@@ -8,14 +8,14 @@ require 'colorize'
 # require "rbtrace"
 
 # TODO:
-## Create Cmd for mv, sh!
-## Create Cmd for sh
+## Create Cmd for mv, mkdir
 ## Think about a way to add flags to build rake cmd
-## Think about the cd && and the set && IMPOSSIBE
-## Think about overriding >> for nice effect with sh
+## Think about the cd && and the set && IMPOSSIBLE
 ## Add files command to proxy FileSet
 ## Think about a :ignore flag for command to allow failure
 ## Move ShArgs to command subclass
+## Create a sync command to make command go in sync
+## Create a strace command
 module Rake::Garden
   ##
   # A chore is a task you do not want to execute or the execute it as needed
