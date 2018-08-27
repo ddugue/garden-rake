@@ -38,7 +38,9 @@ module Rake::Garden
     ##
     # Return the set of all prequisite files
     ##
-    def files
+    def files(dir=nil)
+      return FileSet.new(Dir.glob(dir)) unless dir.nil?
+
       @files ||=
         begin
           files = FileSet.new
