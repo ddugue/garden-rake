@@ -29,8 +29,7 @@ module Rake::Garden
       @output_files = FileSet.new
       @metadata = metadata().namespace(task_name)
       @last_executed = Time.at(@metadata.fetch('last_executed', 0) || 0)
-      @command_index = 0 # Reference for command execution, see queue
-      @logger = Logger.new(level:Logger::INFO)
+      @logger = Logger.new(level:Logger::DEBUG)
       @force = false # Wether to force the task to execute
       super
     end
@@ -120,89 +119,26 @@ module Rake::Garden
     end
   end
 
-
-  ##
-  # Chore that decorate
-  ##
-  class Chore < BaseChore
+  module CommandExecutor
 
     attr_accessor :workdir # Actual work directory of the chore
     attr_accessor :env     # Environment variable passed to commands
 
-    def lookup_prerequisite(prerequisite_name) # :nodoc:
-      if prerequisite_name == true
-        @force = true
-      elsif prerequisite_name.instance_of? String and prerequisite_name.include? "."
-        return FileChore.new(prerequisite_name, @application)
-      else
-        return super prerequisite_name.to_s
-      end
-    end
-
     def initialize(task_name, app)
       @queue = []
-      @skipped = 0
       @workdir = Pathname.new(Pathname.pwd)
       @env = {}
+      @command_index = 0 # Reference for command execution, see queue
       super
-    end
-
-    ##
-    # Wait for all task to complete
-    def wait
-      completed = false
-      until completed  do
-        completed = true
-        for cmd in @queue do
-          completed = !cmd.wait.nil? & completed
-        end
-        sleep(0.0001)
-      end
-    end
-
-    def execute(args=nil)
-      @logger.info " "
-      @logger.important " Running Task: " + name.capitalize.bold
-      start = Time.now
-      super args
-
-      # Once the queue is filled we execute all the waiting commands
-      wait
-
-      @skipped =   @queue.count { |cmd| cmd.skip? }
-      @succeeded = !@queue.any? { |cmd| cmd.error? }
-
-      @queue.each { |cmd| cmd.log(@logger)}
-
-      @output_files = @queue \
-                        .map { |cmd| cmd.output_files } \
-                        .reject { |cmd| cmd.nil? } \
-                        .reduce(FileSet.new, :+)
-
-      @logger.info(@logger.line(char:"="))
-      result = " Result for #{name.capitalize.bold}: "
-      result += "Success? #{@succeeded ? "Yes".green : "No".red}, "
-      result += "Skipped: #{@skipped.to_s.yellow}, "
-      result += "Total user time: #{@logger.render_time(Time.now - start).blue}, "
-      result += "Changed files: #{output_files.length.to_s.bold}"
-      @logger.important(result)
-      @logger.info(" ")
-    end
-
-    ##
-    # We force the execution if the rakefile changed since last execution
-    def needed?
-       return (has_changed(@application.rakefile) or super)
     end
 
     ##
     # Queue command for execution
     def queue(command)
-      @command_index += 1
       command.workdir = @workdir
       command.env = @env.clone
       @logger.debug("#{@logger.render_index @command_index} Queuing '#{command.to_s}'")
-      @queue << command.run(@command_index)
+      @queue << command
       command
     end
 
@@ -236,16 +172,93 @@ module Rake::Garden
       queue CopyCommand.new(f, name)
     end
 
+    def check(cmd)
+      puts "Check: input (#{cmd.input}), command (#{cmd.command}), output (#{cmd.output})"
+      puts cmd.to_s
+    end
+
     ##
     # Run a shell command
     def sh(cmd)
       queue ShCommand.new(cmd)
     end
+  end
 
-    def check(cmd)
-      puts "Check: input (#{cmd.input}), command (#{cmd.command}), output (#{cmd.output})"
-      puts cmd.to_s
+  ##
+  # Chore that decorate
+  ##
+  class Chore < BaseChore
+    include CommandExecutor
+
+    def lookup_prerequisite(prerequisite_name) # :nodoc:
+      if prerequisite_name == true
+        @force = true
+      elsif prerequisite_name.instance_of? String and prerequisite_name.include? "."
+        return FileChore.new(prerequisite_name, @application)
+      else
+        return super prerequisite_name.to_s
+      end
     end
+
+    def initialize(task_name, app)
+      @skipped = 0
+      super
+    end
+
+    ##
+    # Wait for all task to complete
+    def wait
+      completed = false
+      until completed  do
+        completed = true
+        for cmd in @queue do
+          completed = !cmd.wait.nil? & completed
+        end
+        sleep(0.0001)
+      end
+    end
+
+    def run
+      @queue.each_with_index do |item, index|
+        item.run(index)
+      end
+    end
+
+    def execute(args=nil)
+      @logger.info " "
+      @logger.important " Running Task: " + name.capitalize.bold
+      start = Time.now
+      super args
+
+      # Once the queue is filled we execute all the waiting commands
+      run and wait
+
+      @skipped =   @queue.count { |cmd| cmd.skip? }
+      @succeeded = !@queue.any? { |cmd| cmd.error? }
+
+      @queue.each { |cmd| cmd.log(@logger)}
+
+      @output_files = @queue \
+                        .map { |cmd| cmd.output_files } \
+                        .reject { |cmd| cmd.nil? } \
+                        .reduce(FileSet.new, :+)
+
+      @logger.info(@logger.line(char:"="))
+      result = " Result for #{name.capitalize.bold}: "
+      result += "Success? #{@succeeded ? "Yes".green : "No".red}, "
+      result += "Skipped: #{@skipped.to_s.yellow}, "
+      result += "Total user time: #{@logger.render_time(Time.now - start).blue}, "
+      result += "Changed files: #{output_files.length.to_s.bold}"
+      @logger.important(result)
+      @logger.info(" ")
+    end
+
+    ##
+    # We force the execution if the rakefile changed since last execution
+    def needed?
+       return (has_changed(@application.rakefile) or super)
+    end
+
 
     class << self
       def define_task(*args, &block)

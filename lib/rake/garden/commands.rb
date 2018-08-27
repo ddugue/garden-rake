@@ -12,13 +12,13 @@ module Rake::Garden
 
     attr_writer :workdir  # Workdirectory for command
     attr_writer :env      # Environment variable
-    attr_writer :origin   # Origin of the cmd in the rakefile (for debug purpose)
+
     attr_writer :loglevel # Log Level for messages
 
     def initialize(loglevel: 1, workdir: nil, env: nil)
       @workdir = workdir || Dir.pwd
       @env = env || {}
-      @origin = caller_locations
+      @linenumber = caller_locations.find { |loc| loc.path.include? 'rakefile' }.lineno
     end
 
     ##
@@ -59,11 +59,10 @@ module Rake::Garden
     end
 
     ##
-    # Run the command
+    # run the command
     # We don't include it in initialize. It allows to set up some intermediary variable
     def run order
       @order = order
-      @linenumber = caller_locations.find { |loc| loc.path.include? 'rakefile' }.lineno
       @time = 0 if skip?
       self
     end
