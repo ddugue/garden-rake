@@ -243,6 +243,18 @@ module Rake::Garden
   end
 
   ##
+  # Command that simply outputs a simple message
+  class EchoCommand < AbstractCommand
+    def initialize(msg)
+      @msg = msg
+    end
+
+    def log logger
+      logger.info " #{":::::".bold} #{@msg}"
+    end
+  end
+
+  ##
   # Command that wraps a sh
   class ShCommand < Command
     def initialize(cmd)
@@ -266,6 +278,10 @@ module Rake::Garden
         @skip = max_input < min_output
       end
       @skip
+    end
+
+    def output_files
+      @skip ? nil : FileSet.new(@output)
     end
   end
 end

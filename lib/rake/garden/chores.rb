@@ -30,7 +30,7 @@ module Rake::Garden
       @metadata = metadata().namespace(task_name)
       @last_executed = Time.at(@metadata.fetch('last_executed', 0) || 0)
       @command_index = 0 # Reference for command execution, see queue
-      @logger = Logger.new(level:Logger::VERBOSE)
+      @logger = Logger.new(level:Logger::INFO)
       @force = false # Wether to force the task to execute
       super
     end
@@ -206,6 +206,11 @@ module Rake::Garden
       command
     end
 
+    ##
+    # Echo a simple message in the async context
+    def echo *args
+      queue EchoCommand.new(*args)
+    end
     ##
     # Set variable environment
     # Can be used like set :VAR => value or set :VAR, value or set VAR:value
