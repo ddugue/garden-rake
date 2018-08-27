@@ -172,7 +172,7 @@ module Rake::Garden
     end
 
     def skip?
-      @skip = File.mtime(@to) >= File.mtime(@from) if @skip.nil?
+      @skip = File.safe_mtime(@to) > File.safe_mtime(@from) if @skip.nil?
       @skip
     end
 
@@ -246,12 +246,26 @@ module Rake::Garden
   # Command that wraps a sh
   class ShCommand < Command
     def initialize(cmd)
-      @cmd = cmd.format_with_file!
+      if cmd.is_a? String
+        cmd = ShArgs.new nil, cmd
+      end
+      @cmd = cmd.command
+      @input = cmd.input || []
+      @output = cmd.output || []
       super()
     end
 
     def command
       @cmd
+    end
+
+    def skip?
+      if @skip.nil?
+        min_output = @output.map { |f| File.safe_mtime f }.min || Time.at(0)
+        max_input = @input.map { |f| File.safe_mtime f }.max || Time.at(12147483647)
+        @skip = max_input < min_output
+      end
+      @skip
     end
   end
 end

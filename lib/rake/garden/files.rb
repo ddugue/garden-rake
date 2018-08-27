@@ -1,14 +1,17 @@
 
+
 module Rake::Garden
   ##
   # Decorator function to allow string interpolation of filenames
   ##
   def with_file(f, &block)
     String.send(:define_method, :_format_with_file) do
-      self.gsub! /%[fnpxdX]/ do |s|
+      self.gsub! /%[bfnpxdX]/ do |s|
         case s.to_s
         when '%f'
           File.basename(f)
+        when '%b'
+          File.basename(f, '.*')
         when '%n'
           f.pathmap('%n')
         when '%x'
@@ -23,7 +26,7 @@ module Rake::Garden
       end
     end
     block.call f
-    String.remove_method(:_format_with_file)
+    String.remove_method(:_format_with_file) if String.method_defined? :_format_with_file
   end
 
   ##
@@ -34,7 +37,7 @@ module Rake::Garden
     # Fix to prevent ruby from memoizing magic_format when calling any?
     def any?
       super
-      String.remove_method(:_format_with_file)
+      String.remove_method(:_format_with_file) if String.method_defined? :_format_with_file
     end
 
     def each(&block)
@@ -61,11 +64,14 @@ class ShArgs
   attr_reader :output
 
   def initialize(input, cmd)
-    @input = input or nil
+    @input = input || nil
     @command = cmd
   end
 
   def >>(other)
+    if other.is_a? String
+      other = [other.format_with_file!]
+    end
     @output = other
     self
   end
@@ -82,7 +88,7 @@ class String
   end
 
   def >>(other)
-    ShArgs.new self.format_with_file!, other.format_with_file!
+    ShArgs.new [self.format_with_file!], other.format_with_file!
   end
 end
 
@@ -93,5 +99,13 @@ class Array
 
   def >>(other)
     ShArgs.new self.format_with_file!, other.format_with_file!
+  end
+end
+
+class File
+  class << self
+    def safe_mtime(f)
+      File.exist?(f) ? File.mtime(f) : Time.at(0)
+    end
   end
 end
