@@ -42,7 +42,9 @@ module Rake::Garden
 
     def each(&block)
       super do |f|
-        with_file f, &block
+        if File.file? f
+          with_file f, &block
+        end
       end
     end
 

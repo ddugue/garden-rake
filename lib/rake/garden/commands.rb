@@ -35,8 +35,8 @@ module Rake::Garden
 
     ##
     # Log command result
-    def log logger
-      pos = logger.render_index @order
+    def log logger, prefix=nil
+      pos = logger.render_index @order, prefix
       time = logger.render_time(@time)
       prefix_size = pos.length + @linenumber.to_s.length + 10
       prefix = "#{pos} rakefile:#{@linenumber.to_s.bold}"
@@ -125,7 +125,7 @@ module Rake::Garden
       super
     end
 
-    def log logger
+    def log logger, prefix=nil
       super
       if @stdout
         logger.debug "#{' ' * 7}Running: #{command}"
@@ -205,6 +205,7 @@ module Rake::Garden
       end
 
       task.env.merge! @dict
+      super()
     end
 
     def to_s
@@ -220,6 +221,7 @@ module Rake::Garden
     def initialize(task, var)
       @var = var
       task.env.delete @var
+      super()
     end
 
     def to_s
@@ -234,6 +236,7 @@ module Rake::Garden
       @to = to
       @to << '/' unless @to.end_with? '/'
       task.workdir = task.workdir.join(@to)
+      super()
     end
 
     def to_s
@@ -281,6 +284,70 @@ module Rake::Garden
 
     def output_files
       @skip ? nil : FileSet.new(@output)
+    end
+  end
+
+  ##
+  # Represent a block that will run synchronously
+  class SyncCommand < AbstractCommand
+    include CommandExecutor
+
+    def initialize(&block)
+      @block = block
+      super()
+    end
+
+    ##
+    # Run the commands in sync
+    def run order
+      start = Time.now
+      @order = order
+      index = 1
+      self.instance_exec(self, &@block)
+      for command in @queue
+        command.run index
+        while command.wait.nil?
+          sleep(0.001)
+        end
+        index += 1
+      end
+      @time = Time.now - start
+    end
+
+    def wait
+      @time
+    end
+
+    def to_s
+      "Running following commands synchronously:"
+    end
+
+    ##
+    # Log command result
+    def log logger
+      super logger
+      @queue.each { |cmd| cmd.log(logger, @order)}
+    end
+    ##
+    # Returns wether there was an error in the execution
+    def error?
+      @queue.any? { |cmd| cmd.error? }
+    end
+
+    ##
+    # Return the affected file of this command
+    def output_files
+      @output_files ||= @queue \
+                        .map { |cmd| cmd.output_files } \
+                        .reject { |cmd| cmd.nil? } \
+                        .reduce(FileSet.new, :+)
+      @output_files
+    end
+
+    ##
+    # Wait and return the result of this command
+    def result
+      nil
     end
   end
 end

@@ -1,3 +1,4 @@
+# coding: utf-8
 
 module Rake::Garden
   ##
@@ -40,8 +41,12 @@ module Rake::Garden
 
     ##
     # Render a single index
-    def render_index(nb, nbdigits: 3)
-      "[#{nb}]".rjust nbdigits + 3
+    def render_index(nb, prefix=nil, nbdigits: 3)
+      if prefix
+        " " * 4 + "└[#{prefix}.#{nb}]"
+      else
+        "[#{nb}]".rjust nbdigits + 3
+      end
     end
 
     ##

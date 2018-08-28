@@ -9,11 +9,12 @@ require 'colorize'
 
 # TODO:
 ## Create Cmd for mv, mkdir
-## Think about a way to add flags to build rake cmd
-## Think about the cd && and the set && IMPOSSIBLE
-## Add files command to proxy FileSet
+## Add global options
+## Add a way to add cd dir, cmd for cd in one command only
 ## Think about a :ignore flag for command to allow failure
 ## Move ShArgs to command subclass
+## Add debug log for skip
+## Add a result option for commands
 ## Create a sync command to make command go in sync
 ## Create a strace command
 module Rake::Garden
@@ -29,7 +30,7 @@ module Rake::Garden
       @output_files = FileSet.new
       @metadata = metadata().namespace(task_name)
       @last_executed = Time.at(@metadata.fetch('last_executed', 0) || 0)
-      @logger = Logger.new(level:Logger::DEBUG)
+      @logger = Logger.new(level:Logger::INFO)
       @force = false # Wether to force the task to execute
       super
     end
@@ -38,8 +39,10 @@ module Rake::Garden
     # Return the set of all prequisite files
     ##
     def files(dir=nil)
+      # If dir is provided we return a new file set
       return FileSet.new(Dir.glob(dir)) unless dir.nil?
 
+      # In default case we return a set of output files of all dependant class
       @files ||=
         begin
           files = FileSet.new
@@ -124,7 +127,7 @@ module Rake::Garden
     attr_accessor :workdir # Actual work directory of the chore
     attr_accessor :env     # Environment variable passed to commands
 
-    def initialize(task_name, app)
+    def initialize(*args)
       @queue = []
       @workdir = Pathname.new(Pathname.pwd)
       @env = {}
@@ -137,7 +140,9 @@ module Rake::Garden
     def queue(command)
       command.workdir = @workdir
       command.env = @env.clone
-      @logger.debug("#{@logger.render_index @command_index} Queuing '#{command.to_s}'")
+
+      @logger.debug("Queuing '#{command.to_s}'") if @logger
+
       @queue << command
       command
     end
@@ -182,6 +187,12 @@ module Rake::Garden
     def sh(cmd)
       queue ShCommand.new(cmd)
     end
+
+    ##
+    # Run a block in sync mode
+    def sync(&block)
+      queue SyncCommand.new(&block)
+    end
   end
 
   ##
@@ -218,6 +229,8 @@ module Rake::Garden
       end
     end
 
+    ##
+    # Start to run all command asynchronously
     def run
       @queue.each_with_index do |item, index|
         item.run(index)
@@ -233,7 +246,7 @@ module Rake::Garden
       # Once the queue is filled we execute all the waiting commands
       run and wait
 
-      @skipped =   @queue.count { |cmd| cmd.skip? }
+      @skipped =   @queue.count { |cmd| cmd.skip? } || 0
       @succeeded = !@queue.any? { |cmd| cmd.error? }
 
       @queue.each { |cmd| cmd.log(@logger)}
