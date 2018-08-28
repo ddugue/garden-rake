@@ -7,43 +7,48 @@ require 'rake/garden/command'
 require 'rake/garden/command_args'
 
 module Garden
+  MAX_TIME = Time.at(12_147_483_647)
+  MIN_TIME = Time.at(0)
 
   ##
   # Command that wraps an Open3 process
   class ShCommand < Command
-
     def initialize(cmd)
-      if cmd.is_a? String
-        cmd = Args.new nil, cmd
-      end
+      cmd = Args.new(nil, cmd) if cmd.is_a? String
       @cmd = cmd.command
       @input = cmd.input || []
       @output = cmd.output || []
-      super()
+      super
     end
 
+    ##
+    # Skip this command if all the input file are older than all the
+    # output files
     def skip?
       if @skip.nil?
-        min_output = @output.map { |f| File.safe_mtime f }.min || Time.at(0)
-        max_input = @input.map { |f| File.safe_mtime f }.max || Time.at(12147483647)
+        min_output = @output.map { |f| File.safe_mtime f }.min || MIN_TIME
+        max_input = @input.map { |f| File.safe_mtime f }.max || MAX_TIME
         @skip = max_input < min_output
       end
       @skip
     end
 
+    ##
+    # Return output files based on the provided output files
     def output_files
       @skip ? nil : FileSet.new(@output)
     end
+
     ##
     # Returns wether there was an error in the execution
     def error?
-      @thread and @thread.value.exitstatus != 0
+      @thread && @thread.value.exitstatus != 0
     end
 
     ##
     # Returns wether the execution is done and successful
     def success?
-      @thread and @thread.value.exitstatus == 0
+      @thread && @thread.value.exitstatus.zero?
     end
 
     ##
@@ -55,29 +60,48 @@ module Garden
       @time
     end
 
-    def run order
+    ##
+    # Wrapper for popen3
+    def popen3
+      Open3.popen3(@env, @cmd, chdir: @workdir)
+    end
+
+    def run(order)
       @start = Time.now
-      @stdin, @stdout, @stderr, @thread = Open3.popen3(@env, @cmd, :chdir=>@workdir) unless skip?
+      @stdin, @stdout, @stderr, @thread = popen3 unless skip?
       super
     end
 
-    def log logger, prefix=nil
-      super
-      if @stdout
-        logger.debug "#{' ' * 7}Running: #{@cmd}"
-        for out_line in @stdout.readlines do
-          logger.verbose("#{' ' * 7}#{out_line.strip}") if out_line.strip.length != 0
-        end
+    ##
+    # Log stdout of the command
+    def log_stdout(logger)
+      return unless @stdout
+      whitespace = ' ' * 7
+      logger.debug "#{whitespace}Running: #{@cmd}"
+      @stdout.readlines.each do |line|
+        line.strip!
+        logger.verbose("#{whitespace}#{line}") unless line.empty?
       end
+    end
 
-      if error?
-        logger.error "****** There was an error running #{to_s.bold}: ******"
-        stderr = @stderr.read
-        if stderr.strip.length != 0
-          logger.error stderr
-          logger.error " "
-        end
-      end
+    ##
+    # Log stderr of the command
+    def log_stderr(logger)
+      return unless error?
+      logger.error "****** There was an error running #{to_s.bold}: ******"
+      stderr = @stderr.read
+
+      return if stderr.strip.empty?
+      logger.error stderr
+      logger.error ' '
+    end
+
+    ##
+    # Log stdout and stderr after the regular log
+    def log(logger, prefix = nil)
+      super
+      log_stdout(logger)
+      log_stderr(logger)
     end
 
     def result

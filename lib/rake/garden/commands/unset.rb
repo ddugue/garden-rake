@@ -8,7 +8,7 @@ module Garden
     def initialize(task, var)
       @var = var
       task.env.delete @var
-      super()
+      super
     end
 
     def to_s

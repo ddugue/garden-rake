@@ -8,8 +8,8 @@ module Garden
       @msg = msg
     end
 
-    def log logger
-      logger.info " #{":::::".bold} #{@msg}"
+    def log(logger)
+      logger.info " #{':::::'.bold} #{@msg}"
     end
   end
 end

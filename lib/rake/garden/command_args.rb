@@ -1,4 +1,3 @@
-
 ##
 # Small data structure to pass Arguments to an SH Command
 class Args
@@ -12,9 +11,7 @@ class Args
   end
 
   def >>(other)
-    if other.is_a? String
-      other = [other.format_with_file!]
-    end
+    other = [other.format_with_file!] if other.is_a? String
     @output = other
     self
   end

@@ -1,3 +1,4 @@
+require 'rake/garden/logger'
 module Garden
   ##
   # AbstractCmd represent an abstract command that can be queued and run
@@ -34,28 +35,66 @@ module Garden
     end
 
     ##
-    # Log command result
-    def log(logger, prefix = nil)
-      pos = logger.render_index @order, prefix
-      time = logger.render_time(@time)
-      prefix_size = pos.length + @linenumber.to_s.length + 10
-      prefix = "#{pos} rakefile:#{@linenumber.to_s.bold}"
+    # Render the prefix of the status
+    # If parent is provided, it means it should log as a sub-entry
+    # The prefix consist of the queue number, and the source of the execution
+    def status_prefix(parent = nil)
+      pos = Logger.render_index @order, parent
+      [
+        pos.length + @linenumber.to_s.length + 10,
+        "#{pos} rakefile:#{@linenumber.to_s.bold}"
+      ]
+    end
+
+    ##
+    # Return the color of the status text
+    def status_color
       if skip?
-        status = 'skipped'
-        color = :yellow
+        :yellow
       elsif error?
-        status = 'error'
-        color = :red
+        :red
       else
-        status = 'success'
-        color = :green
+        :green
       end
+    end
 
-      suffix_size = status.length + 7 + 6
-      cmd_size = logger.terminal_width - (2 + 4 + suffix_size + prefix_size) + 15
+    ##
+    # Return the status text of the command
+    def status_text
+      if skip?
+        'skipped'
+      elsif error?
+        'error'
+      else
+        'success'
+      end
+    end
 
-      cmd = "'#{logger.truncate_s(to_s, cmd_size - 1).colorize(color)}'".ljust cmd_size
-      logger.info "#{prefix} #{cmd} [#{status.colorize(color)}] ... #{time.to_s.blue} "
+    ##
+    # Return the suffix of the status long info
+    def status_suffix
+      time = Logger.render_time(@time).to_s.blue
+      [
+        status_text.length + 7 + 6,
+        "[#{status_text.colorize(status_color)}] ... #{time}"
+      ]
+    end
+
+    ##
+    # Return the status message fo the command
+    def status(parent = nil)
+      prefix_size, prefix = status_prefix parent
+      suffix_size, suffix = status_suffix
+      size = Logger.terminal_width - (suffix_size + prefix_size) + 9
+      cmd = "'#{Logger.truncate_s(to_s, size).colorize(status_color)}'"
+      cmd = cmd.ljust size
+      "#{prefix} #{cmd} #{suffix} "
+    end
+
+    ##
+    # Log command result
+    def log(logger, parent = nil)
+      logger.info(status(parent))
     end
 
     ##
@@ -74,7 +113,7 @@ module Garden
     # command completed. By default it is instataneous. Will return nil if
     # command is not done
     def wait
-      @time = 0
+      @time ||= 0
     end
 
     ##

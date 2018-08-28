@@ -14,49 +14,45 @@ module Garden
 
     ##
     # Run the commands in sync
-    def run order
+    def run(order)
       start = Time.now
       @order = order
+
+      instance_exec(self, &@block)
+
       index = 1
-      self.instance_exec(self, &@block)
-      for command in @queue
+      @queue.each do |command|
         command.run index
-        while command.wait.nil?
-          sleep(0.001)
-        end
+        sleep(0.001) while command.wait.nil?
         index += 1
       end
       @time = Time.now - start
     end
 
-    def wait
-      @time
-    end
-
     def to_s
-      "Running following commands synchronously:"
+      'Running following commands synchronously:'
     end
 
     ##
     # Log command result
-    def log logger
-      super logger
-      @queue.each { |cmd| cmd.log(logger, @order)}
+    def log(logger)
+      super
+      @queue.each { |cmd| cmd.log(logger, @order) }
     end
+
     ##
     # Returns wether there was an error in the execution
     def error?
-      @queue.any? { |cmd| cmd.error? }
+      @queue.any?(&:error?)
     end
 
     ##
     # Return the affected file of this command
     def output_files
       @output_files ||= @queue \
-                        .map { |cmd| cmd.output_files } \
-                        .reject { |cmd| cmd.nil? } \
+                        .map(&:output_files) \
+                        .reject(&:nil?) \
                         .reduce(FileSet.new, :+)
-      @output_files
     end
 
     ##
