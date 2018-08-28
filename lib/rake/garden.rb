@@ -2,11 +2,7 @@
 $DEBUG ||= ENV.fetch("DEBUG", "false") == "true"
 
 require 'rake'
-require 'rake/garden/chores'
-require 'rake/garden/commands'
-require 'rake/garden/logger'
-require 'rake/garden/strace'
-require 'rake/garden/files'
+require 'rake/garden/command_chore'
 require 'rake/garden/metadata'
 
 module Rake::Garden
@@ -20,7 +16,7 @@ module Rake::Garden
   end
 
   def chore(*args, &block) # :doc:
-    Chore.define_task(*args, &block)
+    CommandChore.define_task(*args, &block)
   end
 
   at_exit {
