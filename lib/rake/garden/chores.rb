@@ -8,7 +8,7 @@ require 'colorize'
 # require "rbtrace"
 
 # TODO:
-## Create Cmd for mv, mkdir
+## Create Cmd for ln, mv, rm, mkdir
 ## Add global options
 ## Add a way to add cd dir, cmd for cd in one command only
 ## Think about a :ignore flag for command to allow failure
@@ -21,6 +21,7 @@ require 'colorize'
 ## Remove check command
 ## Ensure thread base chore work too
 ## Force run and wait when arriving at a sync command
+## Add a way for piping
 module Rake::Garden
   ##
   # A chore is a task you do not want to execute or the execute it as needed
