@@ -15,8 +15,12 @@ require 'colorize'
 ## Move ShArgs to command subclass
 ## Add debug log for skip
 ## Add a result option for commands
-## Create a sync command to make command go in sync
+## Make cp, mv accept a ShArgs
 ## Create a strace command
+## Add Guards
+## Remove check command
+## Ensure thread base chore work too
+## Force run and wait when arriving at a sync command
 module Rake::Garden
   ##
   # A chore is a task you do not want to execute or the execute it as needed
