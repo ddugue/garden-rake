@@ -1,7 +1,7 @@
 require 'rake/garden/command_args'
 require 'rake/garden/ext/string'
 
-module Rake::Garden
+module Garden
   ##
   # Decorator function to allow string interpolation of filenames
   ##

@@ -1,6 +1,6 @@
 require 'rake/garden/command'
 
-module Rake::Garden
+module Garden
   ##
   # Command that represents a change directory
   class ChangedirectoryCommand < Command
@@ -8,7 +8,7 @@ module Rake::Garden
       @to = to
       @to << '/' unless @to.end_with? '/'
       task.workdir = task.workdir.join(@to)
-      super()
+      super
     end
 
     def to_s

@@ -1,6 +1,6 @@
 require 'json'
 
-module Rake::Garden
+module Garden
   ##
   # Recursive datastructure to fetch data from a metadata file
   ##

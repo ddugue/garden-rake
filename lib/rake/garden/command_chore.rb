@@ -3,7 +3,7 @@ require 'rake/garden/file_chore'
 require 'rake/garden/commands/sync'
 require 'rake/garden/command_context'
 
-module Rake::Garden
+module Garden
   ##
   # Chore that decorate
   ##

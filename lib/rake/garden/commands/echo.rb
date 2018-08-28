@@ -1,6 +1,6 @@
 require 'rake/garden/command'
 
-module Rake::Garden
+module Garden
   ##
   # Command that simply outputs a simple message
   class EchoCommand < Command

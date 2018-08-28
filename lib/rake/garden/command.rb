@@ -1,9 +1,7 @@
-
-module Rake::Garden
+module Garden
   ##
   # AbstractCmd represent an abstract command that can be queued and run
   class Command
-
     # FileSet of input files
     attr_accessor :input_files
 
@@ -15,10 +13,12 @@ module Rake::Garden
 
     attr_writer :loglevel # Log Level for messages
 
-    def initialize(loglevel: 1, workdir: nil, env: nil)
+    def initialize(*_args, workdir: nil, env: nil)
       @workdir = workdir || Dir.pwd
       @env = env || {}
-      @linenumber = caller_locations.find { |loc| loc.path.include? 'rakefile' }.lineno
+      @linenumber = caller_locations.find do |loc|
+        loc.path.include? 'rakefile'
+      end.lineno
     end
 
     ##
@@ -35,7 +35,7 @@ module Rake::Garden
 
     ##
     # Log command result
-    def log logger, prefix=nil
+    def log(logger, prefix = nil)
       pos = logger.render_index @order, prefix
       time = logger.render_time(@time)
       prefix_size = pos.length + @linenumber.to_s.length + 10
@@ -59,9 +59,10 @@ module Rake::Garden
     end
 
     ##
-    # run the command
-    # We don't include it in initialize. It allows to set up some intermediary variable
-    def run order
+    # Run the command
+    # We don't include it in initialize. It allows to set up some intermediary
+    # variable
+    def run(order)
       @order = order
       @time = 0 if skip?
       self
@@ -69,8 +70,9 @@ module Rake::Garden
 
     ##
     # Wait and set the time it took to execute
-    # Does not actually wait for the command to complete. Sets the time if the command
-    # completed. By default it is instataneous. Will return nil if command is not done
+    # Does not actually wait for the command to complete. Sets the time if the
+    # command completed. By default it is instataneous. Will return nil if
+    # command is not done
     def wait
       @time = 0
     end
@@ -78,13 +80,7 @@ module Rake::Garden
     ##
     # Render a readeable version of the command
     def to_s
-      "Abstract Command"
-    end
-
-    ##
-    # Return the affected file of this command
-    def output_files
-      nil
+      'Abstract Command'
     end
 
     ##

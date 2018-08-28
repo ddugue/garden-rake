@@ -6,7 +6,7 @@ require 'rake/garden/ext/file'
 require 'rake/garden/command'
 require 'rake/garden/command_args'
 
-module Rake::Garden
+module Garden
 
   ##
   # Command that wraps an Open3 process

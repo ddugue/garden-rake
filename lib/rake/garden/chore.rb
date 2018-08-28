@@ -1,7 +1,7 @@
 require 'rake/garden/logger'
 require 'rake/garden/fileset'
 
-module Rake::Garden
+module Garden
   ##
   # A chore is a task you do not want to execute or the execute it as needed
   # It tries to evaluate wether it should be executed or net

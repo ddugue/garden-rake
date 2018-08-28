@@ -5,7 +5,7 @@ require 'rake'
 require 'rake/garden/command_chore'
 require 'rake/garden/metadata'
 
-module Rake::Garden
+module Garden
 
   def options()
     $options ||= OpenStruct.new

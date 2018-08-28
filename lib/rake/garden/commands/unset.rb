@@ -1,6 +1,6 @@
 require 'rake/garden/command'
 
-module Rake::Garden
+module Garden
   ##
   # Unsetcommand unset an environment variable
   # We mostly create a command for logging purpose

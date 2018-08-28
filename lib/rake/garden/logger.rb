@@ -1,7 +1,7 @@
 # coding: utf-8
 require 'colorize'
 
-module Rake::Garden
+module Garden
   ##
   # Logging class that enables flushing for parallel execution
   ##

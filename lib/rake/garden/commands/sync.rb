@@ -1,7 +1,7 @@
 require 'rake/garden/command'
 require 'rake/garden/command_context'
 
-module Rake::Garden
+module Garden
   ##
   # Represent a block that will run synchronously
   class SyncCommand < Command

@@ -1,7 +1,7 @@
 require 'rake/garden/chore'
 require 'rake/garden/fileset'
 
-module Rake::Garden
+module Garden
   ##
   # FileChore
   # FileChore is a task that encapsulate files, it is used to know if a task should

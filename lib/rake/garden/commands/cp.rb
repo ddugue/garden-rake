@@ -1,7 +1,7 @@
 require 'rake/garden/ext/file'
 require 'rake/garden/commands/sh'
 
-module Rake::Garden
+module Garden
   ##
   # Abstract command that wraps a cp
   class CopyCommand < ShCommand
