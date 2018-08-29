@@ -1,4 +1,5 @@
 # coding: utf-8
+
 require 'colorize'
 
 module Garden
@@ -20,29 +21,20 @@ module Garden
       @errors = []
     end
 
-
     ##
     # Return a line of character
     def line(char: '-')
-      " " + char * (Logger.terminal_width - 2) + " "
-    end
-
-    ##
-    # Return a string padded with space
-    # Left: number of char to the left
-    # Rigth: size of the text to the right default to text length
-    def align_right(text, left: 0, right: nil)
-      " " * (Logger.terminal_width - 1 - left - (right || text.length)) + text
+      ' ' + char * (Logger.terminal_width - 2) + ' '
     end
 
     ##
     # Join all stream of text into
     def join(strings)
       sep = $\ || "\n"
-      strings.map { |s|
+      strings.map do |s|
         next if s.nil?
         s.end_with?(sep) ? s : s + sep
-      }.join
+      end.join
     end
 
     ##
@@ -62,25 +54,29 @@ module Garden
 
     ##
     # Outputs important information to stdout
-    def important(txt)
+    def important(txt = nil)
+      txt = yield if block_given? && @level >= IMPORTANT
       @output << txt if @level >= IMPORTANT
     end
 
     ##
     # Outputs information to stdout
-    def info(txt)
+    def info(txt = nil)
+      txt = yield if block_given? && @level >= INFO
       @output << txt if @level >= INFO
     end
 
     ##
     # Outputs additional information to stdout
-    def verbose(txt)
+    def verbose(txt = nil)
+      txt = yield if block_given? && @level >= VERBOSE
       @output << txt.light_black if @level >= VERBOSE
     end
 
     ##
     # Outputs debug information to stdout
-    def debug(txt)
+    def debug(txt = nil)
+      txt = yield if block_given? && @level >= DEBUG
       @output << txt.light_black if @level >= DEBUG
     end
 
@@ -91,23 +87,23 @@ module Garden
         Rake.application.terminal_width
       end
 
-
       ##
       # Crop a long string with ...
-      def truncate_s s, length = 30, ellipsis = '...'
-        if s.length > (length - 1)
-          s.to_s[0..(length - 1)].gsub(/[^\w]\w+\s*$/, ellipsis)
+      def truncate_s(str, length = 30, ellipsis = '...')
+        if str.length > (length - 1)
+          str.to_s[0..(length - 1)].gsub(/[^\w]\w+\s*$/, ellipsis)
         else
-          s
+          str
         end
       end
+
       ##
       # Render a time with max 6 char
       def render_time(time)
         if time < 10
           "#{time.round(3)}s"
         elsif time >= 3600
-          "#{(time / 3600).floor}h#{(time % 3600 / 60).floor.to_s.ljust(2, "0")}m"
+          "#{(time / 3600).floor}h#{(time % 3600 / 60).floor.to_s.ljust(2, '0')}m"
         elsif time >= 60
           "#{(time / 60).floor}m#{(time % 60).floor}s"
         else
@@ -117,11 +113,11 @@ module Garden
 
       ##
       # Render a single index
-      def render_index(nb, prefix=nil, nbdigits: 3)
+      def render_index(number, prefix = nil, nbdigits: 3)
         if prefix
-          " " * 4 + "└[#{prefix}.#{nb}]"
+          ' ' * 4 + "└[#{prefix}.#{number}]"
         else
-          "[#{nb}]".rjust nbdigits + 3
+          "[#{number}]".rjust nbdigits + 3
         end
       end
     end
