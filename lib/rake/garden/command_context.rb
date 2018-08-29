@@ -11,7 +11,6 @@ require 'rake/garden/commands/sh'
 # Represent a context that enables to create a custom dsl to queue
 # commands
 module CommandsContext
-
   attr_accessor :workdir # Actual work directory of the chore
   attr_accessor :env     # Environment variable passed to commands
 
@@ -29,7 +28,7 @@ module CommandsContext
     command.workdir = @workdir
     command.env = @env.clone
 
-    @logger.debug("Queuing '#{command.to_s}'") if @logger
+    @logger.debug("Queuing '#{command}'") if @logger
 
     @queue << command
     command
@@ -37,9 +36,10 @@ module CommandsContext
 
   ##
   # Echo a simple message in the async context
-  def echo *args
+  def echo(*args)
     queue EchoCommand.new(*args)
   end
+
   ##
   # Set variable environment
   # Can be used like set :VAR => value or set :VAR, value or set VAR:value
@@ -61,15 +61,13 @@ module CommandsContext
 
   ##
   # Copy file -> location
-  def cp(f, name)
-    queue CopyCommand.new(f, name)
+  def cp(file, name)
+    queue CopyCommand.new(file, name)
   end
-
 
   ##
   # Run a shell command
   def sh(cmd)
     queue ShCommand.new(cmd)
   end
-
 end

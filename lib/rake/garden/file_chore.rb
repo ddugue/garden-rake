@@ -4,8 +4,8 @@ require 'rake/garden/fileset'
 module Garden
   ##
   # FileChore
-  # FileChore is a task that encapsulate files, it is used to know if a task should
-  # execute
+  # FileChore is a task that encapsulate files, it is used to know if a task
+  # should execute
   ##
   class FileChore < Chore
     def initialize(task_name, app)
@@ -18,7 +18,7 @@ module Garden
     end
 
     def output_files
-      @files ||= FileSet.new(Dir.glob(@pattern))
+      @output_files ||= FileSet.new(Dir.glob(@pattern))
     end
   end
 end

@@ -63,9 +63,6 @@ module Garden
                         .reduce(FileSet.new, :+)
     end
 
-    def title
-      name.capitalize.bold
-    end
     ##
     # Output a string for the result
     def result(time)
@@ -96,7 +93,7 @@ module Garden
     ##
     # We force the execution if the rakefile changed since last execution
     def needed?
-      changed(@application.rakefile) || super
+      changed?(@application.rakefile) || super
     end
 
     ##

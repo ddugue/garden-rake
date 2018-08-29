@@ -1,33 +1,40 @@
 require 'rake/garden/command_args'
 require 'rake/garden/ext/string'
 
+##
+# Methods to work with our custom
 module Garden
+  def format_string_with_file(file, string)
+    string.gsub!(/%[bfnpxdX]/) do |s|
+      case s.to_s
+      when '%f' then File.basename(file)
+      when '%b' then File.basename(file, '.*')
+      when '%x' then File.extname(file)
+      when '%d' then File.dirname(file)
+      when '%n' then file.pathmap('%n')
+      when '%X' then file.pathmap('%X')
+      when '%p' then file
+      end
+    end
+  end
+
+  ##
+  # Safe remove a method from a class
+  def remove_method_from_class(cls, method_name)
+    return unless cls.method_defined? method_name
+    cls.remove_method method_name
+  end
+
   ##
   # Decorator function to allow string interpolation of filenames
   ##
-  def with_file(f, &block)
+  def with_file(file)
     String.send(:define_method, :_format_with_file) do
-      self.gsub! /%[bfnpxdX]/ do |s|
-        case s.to_s
-        when '%f'
-          File.basename(f)
-        when '%b'
-          File.basename(f, '.*')
-        when '%n'
-          f.pathmap('%n')
-        when '%x'
-          File.extname(f)
-        when '%d'
-          File.dirname(f)
-        when '%X'
-          f.pathmap('%X')
-        when '%p'
-          f
-        end
-      end
+      format_string_with_file(file, self)
     end
-    block.call f
-    String.remove_method(:_format_with_file) if String.method_defined? :_format_with_file
+    yield file
+
+    remove_method_from_class(String, :_format_with_file)
   end
 
   ##
@@ -38,14 +45,12 @@ module Garden
     # Fix to prevent ruby from memoizing magic_format when calling any?
     def any?
       super
-      String.remove_method(:_format_with_file) if String.method_defined? :_format_with_file
+      remove_method_from_class(String, :_format_with_file)
     end
 
     def each(&block)
       super do |f|
-        if File.file? f
-          with_file f, &block
-        end
+        with_file f, &block if File.file? f
       end
     end
 
@@ -54,7 +59,7 @@ module Garden
     end
 
     def >>(other)
-      Args.new self.format_with_file!, other.format_with_file!
+      Args.new format_with_file!, other.format_with_file!
     end
   end
 end

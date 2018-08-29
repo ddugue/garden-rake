@@ -77,7 +77,7 @@ module Garden
     def log_stdout(logger)
       return unless @stdout
       whitespace = ' ' * 7
-      logger.debug "#{whitespace}Running: #{@cmd}"
+      logger.debug "#{whitespace}Executing: #{@cmd}"
       @stdout.readlines.each do |line|
         line.strip!
         logger.verbose("#{whitespace}#{line}") unless line.empty?

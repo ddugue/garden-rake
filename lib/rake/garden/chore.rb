@@ -10,12 +10,17 @@ module Garden
     attr_reader :output_files
 
     def initialize(task_name, app)
-      @output_files = FileSet.new
       @metadata = metadata.namespace(task_name)
       @last_executed = Time.at(@metadata.fetch('last_executed', 0) || 0)
-      @logger = Logger.new(level: Logger::INFO)
+      @logger = Logger.new(level: Logger::DEBUG)
       @force = false # Wether to force the task to execute
       super
+    end
+
+    ##
+    # Represent the printable version of this task name
+    def title
+      name.capitalize.bold
     end
 
     ##
@@ -75,6 +80,20 @@ module Garden
     end
 
     ##
+    # Print debugging information for when a task is skipped.
+    # Might help avoid some tasks not triggering when they should
+    def _debug_skip
+      @logger.debug(" Task was last executed #{@last_executed}")
+      @logger.debug do
+        info = prerequisite_tasks.map(&:output_files) \
+                                 .reduce(:+) \
+                                 .map { |file| [file, File.mtime(file)] } \
+                                 .to_h
+        " Prerequisite tasks: #{info}"
+      end
+    end
+
+    ##
     # Override
     # Return wether the task need to be override
     def needed?
@@ -82,7 +101,10 @@ module Garden
       needed ||= prerequisite_tasks.any? do |t|
         (!t.is_a? Chore) || t.output_files.any? { |f| changed?(f) }
       end
-      @logger.important(" Skipping task: #{name.capitalize.bold}") unless needed
+      unless needed
+        @logger.important(" Skipping task: #{title}")
+        _debug_skip
+      end
       needed
     end
   end
