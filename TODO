@@ -1,0 +1,11 @@
++ Add command mv, ln, rm in the DSL
++ Make all relative command accept Args
++ Make set accepet same syntax as cd
++ Replace Fileset with FileList from rake
++ Introduce STrace sh commands
++ Introduce global options
+** Make on to hook options to task, maybe a before flag?
++ Add guards
++ Add flag to ignore error
++ Make sync process all task that were before
++ Make result from command work
