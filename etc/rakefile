@@ -1,26 +1,42 @@
-require '../lib/rake/garden'
-include Rake::Garden
+$:.unshift File.expand_path("../../lib", __FILE__)
+require 'rake/garden'
+include Garden
 
-task :booty do
-  puts "BOOTY"
+# options.config = parse "--config", :default => ''
+options.debug = "BOD"
+options.on "--custom-debug" do |v|
+  options.verbose = true
+end
+
+options.test_env = env "boo", default: 24
+
+# options.from options.config
+
+a = chore :booty do
+  echo options.debug
+  echo options.verbose.to_s
+  echo options.test_env
 end
 
 chore :bam => ["copy/*.txt"] do |t|
-  puts "String respond? #{"%f".respond_to? :magic_format}"
-  puts "Testing chore"
+  echo "Testing chore"
   t.files.each do |f|
-    check f >> "echo %f"
     cp f, "sub/%f.2.txt"
     sh "sleep 5 && echo 'DAN'"
     # sh "echo 'Oops' && exit 1"
     cd "sub"
     cd ".."
     set :PROBLEM, 'no'
-    sh "echo $PROBLEM"
+    sh f >> "echo $PROBLEM > sub/%b.dat" >> "sub/%b.dat"
+    unset :PROBLEM
+    sync do
+      cp f, "new/%b.boo"
+      sh "new/%b.boo" >> "rm new/%b.boo"
+    end
   end
 end
 
-chore :test => [:bam] do |t|
+chore :test => [:bam, :booty] do |t|
   t.files.each do |f|
     puts "File changed #{f}"
   end

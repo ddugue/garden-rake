@@ -17,11 +17,6 @@ module Garden
       parse
     end
 
-    # Proxy the +ENV+ rake object for a unified access
-    def env
-      ENV
-    end
-
     # Proxy for +OptionParser.on+, see +OptionParser+ documentation for usage
     def on(*args, **kwargs, &block)
       @parser.on(*args, **kwargs, &block)
