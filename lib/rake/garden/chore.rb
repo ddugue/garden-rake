@@ -8,6 +8,7 @@ module Garden
   class Chore < Rake::Task
     attr_reader :last_executed
     attr_reader :output_files
+    attr_accessor :options
 
     def initialize(task_name, app)
       @metadata = metadata.namespace(task_name)

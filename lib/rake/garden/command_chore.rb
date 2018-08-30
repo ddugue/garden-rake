@@ -103,8 +103,10 @@ module Garden
     end
 
     class << self
-      def define_task(*args, &block)
-        Rake.application.define_task(self, *args, &block)
+      def define_task(options, *args, &block)
+        chore = Rake.application.define_task(self, *args, &block)
+        chore.options = options
+        chore
       end
     end
   end
