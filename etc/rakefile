@@ -2,6 +2,22 @@ $:.unshift File.expand_path("../../lib", __FILE__)
 require 'rake/garden'
 include Garden
 
+s = StraceParser.new [
+"++++",
+'open(david, "AOE(aeo,daw)", fam, [family, honor, courage], {dav: boom}) = 0',
+'close(david, "AOE(aeo,daw)", fam, [family, honor, courage], {dav: boom}) = 0',
+'open(anto, "AOE(aeo,daw)", fam, [family, honor, courage], {dav: boom}) = 0',
+"---"
+]
+s.each do |fn, args, rest|
+  puts "FN #{fn}"
+  puts "ARGS #{args.to_s}"
+  puts "FIRST ARG #{args.array[0].to_s}"
+  puts "REST #{rest}"
+end
+
+exit
+
 # options.config = parse "--config", :default => ''
 options.debug = "BOD"
 options.on "--custom-debug" do |v|

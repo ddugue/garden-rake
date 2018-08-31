@@ -6,6 +6,7 @@ require 'rake/garden/command_chore'
 require 'rake/garden/metadata'
 require 'rake/garden/options'
 require 'rake/garden/env_parser'
+require 'rake/garden/strace'
 
 module Garden
   include EnvParser
