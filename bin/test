@@ -1,1 +1,1 @@
-cd test && BOO=False rake -f ../etc/rakefile test -- --custom-debug
+cd test && touch ../../garden-stake/tests/test.ini && BOO=False rake -f ../etc/rakefile strace -- --custom-debug

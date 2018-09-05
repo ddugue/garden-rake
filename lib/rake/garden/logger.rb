@@ -55,29 +55,53 @@ module Garden
     ##
     # Outputs important information to stdout
     def important(txt = nil)
-      txt = yield if block_given? && @level >= IMPORTANT
-      @output << txt if @level >= IMPORTANT
+      return unless important?
+      txt = yield if block_given?
+      @output << txt
+    end
+
+    # Returns wether the logger will output important messages
+    def important?
+      @level >= IMPORTANT
     end
 
     ##
     # Outputs information to stdout
     def info(txt = nil)
-      txt = yield if block_given? && @level >= INFO
-      @output << txt if @level >= INFO
+      return unless info?
+      txt = yield if block_given?
+      @output << txt
+    end
+
+    # Returns wether the logger will output info level messages
+    def info?
+      @level >= INFO
     end
 
     ##
     # Outputs additional information to stdout
     def verbose(txt = nil)
-      txt = yield if block_given? && @level >= VERBOSE
-      @output << txt.light_black if @level >= VERBOSE
+      return unless verbose?
+      txt = yield if block_given?
+      @output << txt.light_black
+    end
+
+    # Returns wether the logger will output verbose level messages
+    def verbose?
+      @level >= VERBOSE
     end
 
     ##
     # Outputs debug information to stdout
     def debug(txt = nil)
-      txt = yield if block_given? && @level >= DEBUG
-      @output << txt.light_black if @level >= DEBUG
+      return unless debug?
+      txt = yield if block_given?
+      @output << txt.light_black
+    end
+
+    # Returns wether the logger will output debug messages
+    def debug?
+      @level >= DEBUG
     end
 
     class << self

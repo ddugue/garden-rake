@@ -14,7 +14,7 @@ module Garden
 
     attr_writer :loglevel # Log Level for messages
 
-    def initialize(*_args, workdir: nil, env: nil)
+    def initialize(*_args, workdir: nil, env: nil, **kwargs)
       @workdir = workdir || Dir.pwd
       @env = env || {}
       @linenumber = caller_locations.find do |loc|

@@ -1,22 +1,7 @@
 $:.unshift File.expand_path("../../lib", __FILE__)
+$DEBUG = true
 require 'rake/garden'
 include Garden
-
-s = StraceParser.new [
-"++++",
-'open(david, "AOE(aeo,daw)", fam, [family, honor, courage], {dav: boom}) = 0',
-'close(david, "AOE(aeo,daw)", fam, [family, honor, courage], {dav: boom}) = 0',
-'open(anto, "AOE(aeo,daw)", fam, [family, honor, courage], {dav: boom}) = 0',
-"---"
-]
-s.each do |fn, args, rest|
-  puts "FN #{fn}"
-  puts "ARGS #{args.to_s}"
-  puts "FIRST ARG #{args.array[0].to_s}"
-  puts "REST #{rest}"
-end
-
-exit
 
 # options.config = parse "--config", :default => ''
 options.debug = "BOD"
@@ -50,6 +35,17 @@ chore :bam => ["copy/*.txt"] do |t|
       sh "new/%b.boo" >> "rm new/%b.boo"
     end
   end
+end
+
+chore :strace do |t|
+  puts "In Strace"
+  set :TEST => false
+  strace "cp new.txt new.2.txt"
+  strace "mv new.2.txt new.3.txt"
+  strace "echo 'ALIBABA'"
+  cd "../../garden-stake"
+
+  strace "python -m stake.loader tests/test.html -o tests/d/output.html -c tests/test.ini --verbose"
 end
 
 chore :test => [:bam, :booty] do |t|

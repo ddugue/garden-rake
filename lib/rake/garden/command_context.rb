@@ -70,4 +70,8 @@ module CommandsContext
   def sh(cmd)
     queue ShCommand.new(cmd)
   end
+
+  def strace(cmd)
+    queue StraceCommand.new(cmd)
+  end
 end

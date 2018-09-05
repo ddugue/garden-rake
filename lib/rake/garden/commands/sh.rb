@@ -52,10 +52,19 @@ module Garden
     end
 
     ##
+    # Executes when the process is complete
+    def on_complete
+      @time ||= Time.now - @start
+    end
+
+    ##
     # Wait for process to complete
+    # TODO: Make async process more developper friendy
+    # ADD completed flag, make time a property
+    # Merge wait and result
     def wait
       if @time.nil?
-        @time ||= Time.now - @start unless @thread.status
+         on_complete unless @thread.status
       end
       @time
     end
