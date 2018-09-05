@@ -28,7 +28,7 @@ module CommandsContext
     command.workdir = @workdir
     command.env = @env.clone
 
-    @logger.debug("Queuing '#{command}'") if @logger
+    @logger.debug(" Queuing '#{command}'") if @logger
 
     @queue << command
     command

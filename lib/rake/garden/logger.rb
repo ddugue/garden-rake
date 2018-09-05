@@ -114,8 +114,8 @@ module Garden
       ##
       # Crop a long string with ...
       def truncate_s(str, length = 30, ellipsis = '...')
-        if str.length > (length - 1)
-          str.to_s[0..(length - 1)].gsub(/[^\w]\w+\s*$/, ellipsis)
+        if str.length > (length - 4)
+          str.to_s[0..(length - 4)].gsub(/[^\w]\w+\s*$/, ellipsis)
         else
           str
         end

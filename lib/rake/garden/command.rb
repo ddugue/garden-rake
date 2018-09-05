@@ -86,7 +86,7 @@ module Garden
       prefix_size, prefix = status_prefix parent
       suffix_size, suffix = status_suffix
       size = Logger.terminal_width - (suffix_size + prefix_size) + 9
-      cmd = "'#{Logger.truncate_s(to_s, size).colorize(status_color)}'"
+      cmd = "'#{Logger.truncate_s(to_s, size - 11).colorize(status_color)}'"
       cmd = cmd.ljust size
       "#{prefix} #{cmd} #{suffix} "
     end
