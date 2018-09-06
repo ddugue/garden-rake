@@ -8,7 +8,7 @@ module Garden
       @msg = msg.format_with_file!
     end
 
-    def log(logger)
+    def log(logger, parent=nil)
       logger.info " #{':::::'.bold} #{@msg}"
     end
   end

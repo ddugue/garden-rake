@@ -9,6 +9,8 @@ module Garden
 
     def initialize(&block)
       @block = block
+      @current_file = $CURRENT_FILE.dup
+      @current_root = $CURRENT_ROOT.dup
       super()
     end
 
@@ -18,7 +20,9 @@ module Garden
       start = Time.now
       @order = order
 
-      instance_exec(self, &@block)
+      with_file @current_root, @current_file do
+        instance_exec(self, &@block)
+      end
 
       index = 1
       @queue.each do |command|

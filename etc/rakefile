@@ -41,6 +41,10 @@ chore :files => [true, "subs/**/*.txt"] do |t|
   t.files.each do |f|
     echo "File %b"
     echo "File %B"
+    sync do
+      echo "File %d"
+      echo "File %D"
+    end
   end
 end
 

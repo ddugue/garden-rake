@@ -5,7 +5,7 @@ require 'rake/garden/ext/string'
 # Methods to work with our custom
 module Garden
   def format_string_with_file(root, file, string)
-    string.gsub!(/%[bBfFnpxdX]/) do |s|
+    string.gsub!(/%[bBfFnpxdDX]/) do |s|
       prefix = file.to_s.sub(root, '').sub(File.basename(file), '')
       case s.to_s
       when '%f' then prefix + File.basename(file)
@@ -13,7 +13,8 @@ module Garden
       when '%b' then prefix + File.basename(file, '.*')
       when '%B' then File.basename(file, '.*')
       when '%x' then File.extname(file)
-      when '%d' then File.dirname(file)
+      when '%d' then prefix
+      when '%D' then File.dirname(file)
       when '%n' then file.pathmap('%n')
       when '%X' then file.pathmap('%X')
       when '%p' then file
@@ -35,8 +36,11 @@ module Garden
     String.send(:define_method, :_format_with_file) do
       format_string_with_file(root, file, self)
     end
+    $CURRENT_FILE = file
+    $CURRENT_ROOT = root
     yield file
-
+    $CURRENT_FILE = nil
+    $CURRENT_ROOT = nil
     remove_method_from_class(String, :_format_with_file)
   end
 
