@@ -36,7 +36,7 @@ module Garden
     ##
     # Return output files based on the provided output files
     def output_files
-      @skip ? nil : FileSet.new(@output)
+      @skip ? nil : FileSet.new([@output])
     end
 
     ##

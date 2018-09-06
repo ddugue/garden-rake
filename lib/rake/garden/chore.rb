@@ -29,14 +29,14 @@ module Garden
     ##
     def files(dir = nil)
       # If dir is provided we return a new file set
-      return FileSet.new(Dir.glob(dir)) unless dir.nil?
+      return FileSet.new(dir) unless dir.nil?
 
       # In default case we return a set of output files of all dependant class
       @files ||=
         begin
           files = FileSet.new
           prerequisite_tasks.select { |t| t.is_a? Chore }.each do |t|
-            files.merge(t.output_files)
+            files.anchor(t.output_files)
           end
           files
         end

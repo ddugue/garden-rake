@@ -5,7 +5,7 @@ module Garden
   # Command that simply outputs a simple message
   class EchoCommand < Command
     def initialize(msg)
-      @msg = msg
+      @msg = msg.format_with_file!
     end
 
     def log(logger)

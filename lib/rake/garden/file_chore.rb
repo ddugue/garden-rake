@@ -18,7 +18,7 @@ module Garden
     end
 
     def output_files
-      @output_files ||= FileSet.new(Dir.glob(@pattern))
+      @output_files ||= FileSet.new(@pattern)
     end
   end
 end

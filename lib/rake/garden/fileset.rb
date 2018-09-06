@@ -4,11 +4,14 @@ require 'rake/garden/ext/string'
 ##
 # Methods to work with our custom
 module Garden
-  def format_string_with_file(file, string)
-    string.gsub!(/%[bfnpxdX]/) do |s|
+  def format_string_with_file(root, file, string)
+    string.gsub!(/%[bBfFnpxdX]/) do |s|
+      prefix = file.to_s.sub(root, '').sub(File.basename(file), '')
       case s.to_s
-      when '%f' then File.basename(file)
-      when '%b' then File.basename(file, '.*')
+      when '%f' then prefix + File.basename(file)
+      when '%F' then File.basename(file)
+      when '%b' then prefix + File.basename(file, '.*')
+      when '%B' then File.basename(file, '.*')
       when '%x' then File.extname(file)
       when '%d' then File.dirname(file)
       when '%n' then file.pathmap('%n')
@@ -28,9 +31,9 @@ module Garden
   ##
   # Decorator function to allow string interpolation of filenames
   ##
-  def with_file(file)
+  def with_file(root, file)
     String.send(:define_method, :_format_with_file) do
-      format_string_with_file(file, self)
+      format_string_with_file(root, file, self)
     end
     yield file
 
@@ -41,6 +44,28 @@ module Garden
   # Class used to decorate the each method with our magic_format method
   ##
   class FileSet < Set
+    GLOB = Regexp.new(/^[^\*]*/)
+
+    def initialize(glob=nil)
+      @filesets = []
+      @pwd = Dir.pwd
+      if glob.is_a? String
+        @glob = glob
+        super(Dir.glob glob)
+      else
+        super
+      end
+    end
+
+    def glob
+      @glob ||= ''
+    end
+    ##
+    # Return the root of the glob pattern
+    # For instance in src/**/* the root would be pwd + src
+    def root
+      @root ||= (GLOB.match(glob)[0] || '').to_s
+    end
     ##
     # Fix to prevent ruby from memoizing magic_format when calling any?
     def any?
@@ -50,8 +75,15 @@ module Garden
 
     def each(&block)
       super do |f|
-        with_file f, &block if File.file? f
+        with_file root, f, &block if File.file? f
       end
+      @filesets.each do |fs|
+        fs.each &block
+      end
+    end
+
+    def anchor(fileset)
+      @filesets.push(fileset)
     end
 
     def format_with_file!

@@ -1,3 +1,4 @@
+require 'rake/garden/noop'
 require 'rake/garden/chore'
 require 'rake/garden/file_chore'
 require 'rake/garden/commands/sync'
@@ -11,9 +12,9 @@ module Garden
     include CommandsContext
 
     def lookup_prerequisite(prerequisite_name) # :nodoc:
-      if prerequisite_name == true
+      if prerequisite_name == true || prerequisite_name == 'true'
         @force = true
-        nil
+        Noop.new @application
       elsif (prerequisite_name.instance_of? String) \
             && (prerequisite_name.include? '.')
         FileChore.new(prerequisite_name, @application)

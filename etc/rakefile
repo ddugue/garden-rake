@@ -37,6 +37,14 @@ chore :bam => ["copy/*.txt"] do |t|
   end
 end
 
+chore :files => [true, "subs/**/*.txt"] do |t|
+  t.files.each do |f|
+    echo "File %b"
+    echo "File %B"
+  end
+end
+
+
 chore :strace do |t|
   puts "In Strace"
   set :TEST => false
