@@ -6,6 +6,7 @@ require 'rake/garden/commands/unset'
 require 'rake/garden/commands/cd'
 require 'rake/garden/commands/cp'
 require 'rake/garden/commands/sh'
+require 'rake/garden/commands/mkdir'
 
 ##
 # Represent a context that enables to create a custom dsl to queue
@@ -32,6 +33,12 @@ module CommandsContext
 
     @queue << command
     command
+  end
+
+  ##
+  # Create synchronously a folder
+  def mkdir(*args)
+    queue MakeDirCommand.new(*args)
   end
 
   ##
