@@ -212,7 +212,7 @@ module Garden
     end
 
     def initialize(cmd)
-      @orig_command = cmd
+      @orig_command = cmd.format_with_file!
       @calls = Array.new
 
       @stats = {} # For debug purposes

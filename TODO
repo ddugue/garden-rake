@@ -13,6 +13,8 @@
 
 + Add Frozen string literal everywhere
 
++ Consolidate command arguments passing
+
 + Add a force flag
 + Add a method to get ALL prerequisite task output files
 + Add guards
