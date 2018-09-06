@@ -60,7 +60,8 @@ module Garden
   class JSONMetadata < TreeDict
     def initialize(filename)
       @filename = filename
-      super JSON.load(File.read(@filename)) if File.file?(@filename)
+      data = JSON.load(File.read(@filename)) if File.file?(@filename)
+      super data
     end
 
     def save

@@ -1,18 +1,19 @@
 + Add command mkdir, mv, ln, rm in the DSL
 + Make all relative command accept Args
 + Make set accept same syntax as cd
-+ Introduce STrace sh commands
-+ Add a before flag
-** Make on to hook options to task, maybe a before flag?
-+ Add guards
 + Make sync process all task that were before
 + Make result from command work
+
++ Add a before flag
 
 + Use LateTime and EarlyTime for time comparison
 + Replace Fileset with FileList from rake
 
 + Add Frozen string literal everywhere
 
++ Add a force flag
++ Add a method to get ALL prerequisite task output files
++ Add guards
 + Add flag to ignore error
 
 + Create a Readme
