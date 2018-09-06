@@ -5,7 +5,7 @@ module Garden
   # Abstract command that wraps a mkdir
   class MakeDirCommand < ShCommand
     def initialize(folder)
-      @folder = to.format_with_file!
+      @folder = folder.format_with_file!
       super "mkdir -p #{@folder}"
     end
 
