@@ -46,4 +46,22 @@ module Garden
       "Spawning process '#{@cmd}'"
     end
   end
+
+
+  task = Rake::Task.define_task("close") do
+    puts "Closing all open daemon pids"
+    pids = metadata.namespace("daemons")
+    pids.each do |cmd, pid|
+      puts "Closing PID #{pid} for command #{cmd}"
+      begin
+        Process.kill('QUIT', pid)
+      rescue Errno::ESRCH
+        puts "Process PID #{pid} has already been killed"
+      end
+    end
+    pids.clear
+    pids.save
+  end
+  # task.description = "Closes all opened daemon pids"
+
 end

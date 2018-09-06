@@ -42,6 +42,10 @@ module Garden
       @data[ind]
     end
 
+    def clear
+      @data.clear
+    end
+
     def []=(ind, value)
       @data[ind] = value
     end
@@ -52,6 +56,14 @@ module Garden
 
     def fetch(value, default)
       @data.fetch(value, default)
+    end
+
+    def each(*args, &block)
+      @data.each(*args, &block)
+    end
+
+    def to_s
+      @data.to_s
     end
   end
 
