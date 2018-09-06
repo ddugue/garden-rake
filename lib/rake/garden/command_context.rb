@@ -7,6 +7,7 @@ require 'rake/garden/commands/cd'
 require 'rake/garden/commands/cp'
 require 'rake/garden/commands/sh'
 require 'rake/garden/commands/mkdir'
+require 'rake/garden/commands/daemon'
 
 ##
 # Represent a context that enables to create a custom dsl to queue
@@ -80,5 +81,9 @@ module CommandsContext
 
   def strace(cmd)
     queue StraceCommand.new(cmd)
+  end
+
+  def daemon(cmd)
+    queue DaemonCommand.new(cmd)
   end
 end

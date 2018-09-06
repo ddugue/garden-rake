@@ -1,5 +1,5 @@
 $:.unshift File.expand_path("../../lib", __FILE__)
-$DEBUG = true
+# $DEBUG = true
 require 'rake/garden'
 include Garden
 
@@ -64,4 +64,8 @@ chore :test => [:bam, :booty] do |t|
   t.files.each do |f|
     puts "File changed #{f}"
   end
+end
+
+chore :service do
+  daemon "python timer.py"
 end

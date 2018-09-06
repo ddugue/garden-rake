@@ -7,7 +7,9 @@
 + Add a before flag
 
 + Use LateTime and EarlyTime for time comparison
-+ Replace Fileset with FileList from rake
++ Replace Fileset with FileList from rake and remake better deps
+
++ Move whitespace calculation to fn that accepts prefix
 
 + Add Frozen string literal everywhere
 
