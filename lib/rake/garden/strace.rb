@@ -203,7 +203,8 @@ module Garden
       Regexp.new('^/etc'),
       Regexp.new('^/dev'),
       Regexp.new('^/proc'),
-      Regexp.new('node_modules'),
+      Regexp.new('node_modules/'),
+      Regexp.new('site-packages/'),
       Regexp.new('__pycache__'),
       Regexp.new('\.so$')
     ]
@@ -265,7 +266,7 @@ module Garden
     end
 
     def output_files
-      @output_files ||= wrote_files.select { |filepath| filter filepath }.map { |path| Pathname.new(@workdir).join(path) }
+      @output_files ||= FileSet.new(wrote_files.select { |filepath| filter filepath }.map { |path| Pathname.new(@workdir).join(path) })
     end
 
     def read_files
