@@ -210,21 +210,22 @@ module Garden
     ]
 
     def result_path
-      @result_path ||= "/tmp/#{@orig_command.hash}"
+      @result_path ||= "/tmp/#{@cmd.hash}"
     end
 
     def initialize(cmd)
-      @orig_command = cmd.format_with_file!
+      super
       @calls = Array.new
 
       @stats = {} # For debug purposes
       @debug = $DEBUG || false
-
-      @metadata = metadata.namespace(@orig_command)
-
-      super "strace -qq -f -e trace=open,rename,openat -o #{result_path} #{@orig_command}"
+      @metadata = metadata.namespace(@cmd)
       @input = @metadata.fetch("inputs", [])
       @output = @metadata.fetch("outputs", [])
+    end
+
+    def command
+      "strace -qq -f -e trace=open,rename,openat -o #{result_path} #{@cmd}"
     end
 
     def save_results
@@ -286,10 +287,6 @@ module Garden
         logger.debug { "#{whitespace}Strace wrote files (#{output_files.length}): #{output_files.map(&:to_s)}" }
         logger.debug { "#{whitespace}Strace syscall count: #{@stats}" }
       end
-    end
-
-    def to_s
-      @orig_command
     end
   end
 end

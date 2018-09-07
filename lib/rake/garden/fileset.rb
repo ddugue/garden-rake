@@ -56,13 +56,15 @@ module Garden
       if glob.is_a? String
         @glob = glob
         super(Dir.glob glob)
+      elsif glob.is_a? Enumerable
+        super(glob.map { |g| Dir.glob(g) }.flatten)
       else
         super
       end
     end
 
     def join(sep)
-      to_a.join sep
+      @filesets.map(&:to_a).flatten.concat(to_a).join sep
     end
 
     def glob

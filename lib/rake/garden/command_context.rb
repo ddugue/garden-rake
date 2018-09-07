@@ -1,5 +1,7 @@
 require 'pathname'
 
+require 'rake/garden/command_args'
+
 require 'rake/garden/commands/echo'
 require 'rake/garden/commands/set'
 require 'rake/garden/commands/unset'
@@ -38,8 +40,8 @@ module CommandsContext
 
   ##
   # Create synchronously a folder
-  def mkdir(*args)
-    queue MakeDirCommand.new(*args)
+  def mkdir(folder)
+    queue MakeDirCommand.new(folder)
   end
 
   ##
@@ -75,12 +77,12 @@ module CommandsContext
 
   ##
   # Run a shell command
-  def sh(cmd)
-    queue ShCommand.new(cmd)
+  def sh(*args)
+    queue ShCommand.new(CommandArgs.new(*args))
   end
 
-  def strace(cmd)
-    queue StraceCommand.new(cmd)
+  def strace(*args)
+    queue StraceCommand.new(CommandArgs.new(*args))
   end
 
   def daemon(cmd)

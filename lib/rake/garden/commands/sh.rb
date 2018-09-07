@@ -14,11 +14,16 @@ module Garden
   # Command that wraps an Open3 process
   class ShCommand < Command
     def initialize(cmd)
-      cmd = Args.new(nil, cmd) if cmd.is_a? String
-      @cmd = cmd.command
-      @input = cmd.input || []
-      @output = cmd.output || []
+      if (cmd)
+        @cmd = cmd.command
+        @input = cmd.input || []
+        @output = cmd.output || FileSet.new
+      end
       super
+    end
+
+    def command
+      @cmd
     end
 
     ##
@@ -36,7 +41,7 @@ module Garden
     ##
     # Return output files based on the provided output files
     def output_files
-      @skip ? nil : FileSet.new(@output)
+      @skip ? nil : @output
     end
 
     ##
@@ -72,7 +77,7 @@ module Garden
     ##
     # Wrapper for popen3
     def popen3
-      Open3.popen3(@env, @cmd, chdir: @workdir)
+      Open3.popen3(@env, command, chdir: @workdir)
     end
 
     def run(order)

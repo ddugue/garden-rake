@@ -13,6 +13,6 @@ class String
   end
 
   def >>(other)
-    Args.new [format_with_file!], other.format_with_file!
+    Args.new self, other
   end
 end

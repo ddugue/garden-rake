@@ -6,7 +6,11 @@ module Garden
   class MakeDirCommand < ShCommand
     def initialize(folder)
       @folder = folder.format_with_file!
-      super "mkdir -p #{@folder}"
+      super()
+    end
+
+    def command
+      "mkdir -p #{@folder}"
     end
 
     def skip?

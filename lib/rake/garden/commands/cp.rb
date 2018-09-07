@@ -8,7 +8,11 @@ module Garden
     def initialize(from, to)
       @from = from
       @to = to.format_with_file!
-      super "mkdir -p #{Pathname.new(@to).dirname} && cp #{@from} #{@to}"
+      super()
+    end
+
+    def command
+      "mkdir -p #{Pathname.new(@to).dirname} && cp #{@from} #{@to}"
     end
 
     def skip?
