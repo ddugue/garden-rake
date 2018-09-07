@@ -61,6 +61,10 @@ module Garden
       end
     end
 
+    def join(sep)
+      to_a.join sep
+    end
+
     def glob
       @glob ||= ''
     end
