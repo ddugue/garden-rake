@@ -204,7 +204,8 @@ module Garden
       Regexp.new('^/dev'),
       Regexp.new('^/proc'),
       Regexp.new('node_modules'),
-      Regexp.new('__pycache__')
+      Regexp.new('__pycache__'),
+      Regexp.new('\.so$')
     ]
 
     def result_path
