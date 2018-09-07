@@ -230,8 +230,8 @@ module Garden
 
     def save_results
       @metadata["env"] = @env
-      @metadata["inputs"] = input_files
-      @metadata["outputs"] = output_files
+      @metadata["inputs"] = input_files.to_a
+      @metadata["outputs"] = output_files.to_a
     end
 
     def skip?

@@ -13,7 +13,7 @@ module Garden
   ##
   # Command that wraps an Open3 process
   class ShCommand < Command
-    def initialize(cmd)
+    def initialize(cmd=nil)
       if (cmd)
         @cmd = cmd.command
         @input = cmd.input || []

@@ -78,11 +78,11 @@ module CommandsContext
   ##
   # Run a shell command
   def sh(*args)
-    queue ShCommand.new(CommandArgs.new(*args))
+    queue ShCommand.new(ShArgs.new(*args))
   end
 
   def strace(*args)
-    queue StraceCommand.new(CommandArgs.new(*args))
+    queue StraceCommand.new(ShArgs.new(*args))
   end
 
   def daemon(cmd)
