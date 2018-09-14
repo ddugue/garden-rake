@@ -15,8 +15,6 @@ module Garden
       when '%x' then File.extname(file)
       when '%d' then prefix
       when '%D' then File.dirname(file)
-      when '%n' then file.pathmap('%n')
-      when '%X' then file.pathmap('%X')
       when '%p' then file
       end
     end
@@ -88,12 +86,17 @@ module Garden
         with_file root, f, &block if File.file? f
       end
       @filesets.each do |fs|
+        puts "ROOT #{fs} #{fs.root}"
         fs.each &block
       end
     end
 
     def anchor(fileset)
       @filesets.push(fileset)
+    end
+
+    def filesets
+      @filesets
     end
 
     def format_with_file!

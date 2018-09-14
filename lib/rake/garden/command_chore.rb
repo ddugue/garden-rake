@@ -16,7 +16,7 @@ module Garden
         @force = true
         Noop.new @application
       elsif (prerequisite_name.instance_of? String) \
-            && (prerequisite_name.include? '.')
+            && ((prerequisite_name.include? '.') || (prerequisite_name.include? '*'))
         FileChore.new(prerequisite_name, @application)
       else
         super prerequisite_name.to_s

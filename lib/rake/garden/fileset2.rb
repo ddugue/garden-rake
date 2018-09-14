@@ -23,6 +23,7 @@ def remove_method_from_class(cls, method_name)
   return unless cls.method_defined? method_name
   cls.remove_method method_name
 end
+
 class Fileset
   include Enumerable
 
@@ -48,8 +49,12 @@ class Fileset
       String.send(:define_method, :_format_with_file) do
         format_string_with_file(@root, file, self)
       end
+      String.send(:define_method, :_get_root) do
+        @root
+      end
       yield file
       remove_method_from_class(String, :_format_with_file)
+      remove_method_from_class(String, :_get_root)
     end
   end
 end

@@ -6,7 +6,7 @@ module Garden
   # Abstract command that wraps a cp
   class CopyCommand < ShCommand
     def initialize(from, to)
-      @from = from
+      @from = from.format_with_file!
       @to = to.format_with_file!
       super()
     end
