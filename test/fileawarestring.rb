@@ -60,3 +60,23 @@ RSpec.describe FileAwareString, "#format_string_with_file" do
       .to eq("/home/sub/test.txt")
   end
 end
+
+RSpec.describe FileAwareString, "#creation" do
+  it "should pass the folder root and the file from the class" do
+    FileAwareString.file = "a.txt"
+    FileAwareString.folder_root = "root"
+    f = FileAwareString.create("%f")
+    expect(f.file).to eq("a.txt")
+    expect(f.folder_root).to eq("root")
+  end
+
+  it "should not override previously passed value" do
+    FileAwareString.file = "a.txt"
+    FileAwareString.folder_root = "root"
+    f = FileAwareString.create("%f")
+    FileAwareString.file = "b.txt"
+    FileAwareString.folder_root = "root2"
+    expect(f.file).to eq("a.txt")
+    expect(f.folder_root).to eq("root")
+  end
+end

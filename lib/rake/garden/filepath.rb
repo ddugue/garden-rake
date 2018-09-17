@@ -4,9 +4,12 @@ class FileAwareString
   attr_reader :folder_root
 
   def initialize(folder_root, file, string)
-    @string = string
-    @file = file
     @folder_root = folder_root
+    @file = file
+    @string = string
+
+    # We keep the formatted attribute to make the conversion lazy and to
+    # keep it happening more than once.
     @formatted = false
   end
 
@@ -34,5 +37,14 @@ class FileAwareString
 
   def to_s
     format_string_with_file
+  end
+
+  class << self
+    attr_accessor :file
+    attr_accessor :folder_root
+
+    def create(string)
+      self.new(self.folder_root, self.file, string)
+    end
   end
 end
