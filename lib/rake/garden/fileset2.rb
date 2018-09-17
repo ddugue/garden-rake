@@ -6,7 +6,7 @@ class Fileset
   def initialize(*args)
     @files = []
     @pending = true
-    @root = nil
+    @folder_root = nil
   end
 
   def resolve
@@ -25,7 +25,7 @@ class Fileset
     previous_root = FileAwareString.folder_root
     previous_file = FileAwareString.file
 
-    FileAwareString.folder_root = @root
+    FileAwareString.folder_root = @folder_root
     @files.each do |file|
       FileAwareString.file = file
       yield file
@@ -42,7 +42,7 @@ class GlobFileset < Fileset
   def initialize(glob)
     super
     @glob = glob
-    @root ||= (GLOB.match(glob)[0] || '').to_s
+    @folder_root ||= (GLOB.match(glob)[0] || '').to_s
   end
 
   def resolve

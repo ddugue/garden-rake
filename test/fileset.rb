@@ -53,5 +53,28 @@ RSpec.describe GlobFileset do
     expect(fs.to_a).to eq(["/tmp/globtest/prefix/a.txt",
                            "/tmp/globtest/prefix/b.txt",
                           ])
+    fs = GlobFileset.new("/tmp/**/prefix/*.txt")
+    expect(fs.to_a).to eq(["/tmp/globtest/prefix/a.txt",
+                           "/tmp/globtest/prefix/b.txt",
+                          ])
+  end
+
+  it "should identify the non-glob part as the root" do
+    fs = GlobFileset.new("/tmp/globtest/**/*.txt")
+    expect(fs.instance_variable_get(:@folder_root)).to eq("/tmp/globtest/")
+  end
+
+  it "should substitute the right path" do
+    %x( mkdir /tmp/globtest/prefix )
+    %x( touch /tmp/globtest/prefix/a.txt )
+    %x( touch /tmp/globtest/prefix/b.txt )
+
+    fs = GlobFileset.new("/tmp/globtest/**/*.txt")
+    expect(fs.map { FileAwareString.create("%f").to_s })\
+      .to eq(["prefix/a.txt", "prefix/b.txt"])
+
+    fs = GlobFileset.new("/tmp/globtest/**/*.txt")
+    expect(fs.map { FileAwareString.create("%F").to_s })\
+      .to eq(["a.txt", "b.txt"])
   end
 end
