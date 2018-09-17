@@ -14,7 +14,11 @@ class Fileset
   end
 
   def <<(file)
-    @files << file
+    if file.is_a? Array
+      @files = file
+    else
+      @files << file
+    end
   end
 
   def each
@@ -49,13 +53,51 @@ class GlobFileset < Fileset
     super
     @files = (Dir.glob @glob).sort
   end
+
+  def self.is_glob(path)
+    path.include? "*"
+  end
 end
 
-class FileGroup
+class FilesetGroup
   include Enumerable
 
-  def initialize(*args)
+  def append_fileset(fileset)
+    if fileset.is_a? Fileset
+      @filesets.unshift fileset
+    elsif fileset.is_a? String
+
+      if GlobFileset.is_glob(fileset)
+        @filesets.unshift GlobFileset.new(fileset)
+      else
+        @orphans.unshift(fileset)
+      end
+    else
+      fileset.each { |fs| append_fileset(fs) }
+    end
   end
 
+  def initialize(*args)
+    @filesets = []
+    @orphans = []
 
+    append_fileset(args)
+
+    unless @orphans.empty?
+      fs = Fileset.new
+      fs << @orphans
+      @filesets.unshift(fs)
+    end
+  end
+
+  def each
+    return enum_for(:each) unless block_given?
+    puts "#{@filesets}"
+    @filesets.each do |fs|
+      fs.each do |file|
+        puts "#{file}"
+        yield file
+      end
+    end
+  end
 end

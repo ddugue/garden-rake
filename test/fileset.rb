@@ -78,3 +78,44 @@ RSpec.describe GlobFileset do
       .to eq(["a.txt", "b.txt"])
   end
 end
+
+RSpec.describe FilesetGroup do
+  after(:all) do
+    %x( rm -fr /tmp/globtest )
+  end
+
+  before(:all) do
+    %x( mkdir /tmp/globtest )
+  end
+
+  before(:each) do
+    %x( mkdir /tmp/globtest/prefix )
+    %x( touch /tmp/globtest/prefix/a.txt )
+    %x( touch /tmp/globtest/prefix/b.txt )
+  end
+
+  it "should work with a single string" do
+    fg = FilesetGroup.new("/tmp/globtest/prefix/a.txt")
+    expect(fg.to_a).to eq(["/tmp/globtest/prefix/a.txt"])
+  end
+
+  it "should work with an array of strings" do
+    fg = FilesetGroup.new(["/tmp/globtest/prefix/a.txt", "/tmp/globtest/prefix/b.txt"])
+    expect(fg.to_a).to eq(["/tmp/globtest/prefix/b.txt", "/tmp/globtest/prefix/a.txt"])
+  end
+
+  it "should work with a glob" do
+    fg = FilesetGroup.new("/tmp/globtest/**/*.txt")
+    expect(fg.to_a).to eq(["/tmp/globtest/prefix/a.txt", "/tmp/globtest/prefix/b.txt"])
+  end
+
+  it "should work with a glob and a string" do
+    fg = FilesetGroup.new("/tmp/globtest/ddugue", "/tmp/globtest/**/*.txt")
+    expect(fg.to_a).to eq(["/tmp/globtest/ddugue", "/tmp/globtest/prefix/a.txt", "/tmp/globtest/prefix/b.txt"])
+  end
+
+  it "should work with a fileset and a string" do
+    fg = FilesetGroup.new(GlobFileset.new("/tmp/globtest/**/*.txt"), "/tmp/globtest/ddugue")
+    expect(fg.to_a).to eq(["/tmp/globtest/ddugue", "/tmp/globtest/prefix/a.txt", "/tmp/globtest/prefix/b.txt"])
+  end
+end
