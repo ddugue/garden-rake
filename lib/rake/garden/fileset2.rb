@@ -1,28 +1,4 @@
-
-def format_string_with_file(root, file, string)
-  string.gsub!(/%[bBfFnpxdDX]/) do |s|
-    prefix = root ? file.to_s.sub(root, '').sub(File.basename(file), '') : ''
-    case s.to_s
-    when '%f' then prefix + File.basename(file)
-    when '%F' then File.basename(file)
-    when '%b' then prefix + File.basename(file, '.*')
-    when '%B' then File.basename(file, '.*')
-    when '%x' then File.extname(file)
-    when '%d' then prefix.empty? ? "#{File.dirname(file)}/" : prefix
-    when '%D' then File.dirname(file)
-    when '%n' then file.pathmap('%n')
-    when '%X' then file.pathmap('%X')
-    when '%p' then file
-    end
-  end
-end
-
-##
-# Safe remove a method from a class
-def remove_method_from_class(cls, method_name)
-  return unless cls.method_defined? method_name
-  cls.remove_method method_name
-end
+require 'rake/garden/filepath'
 
 class Fileset
   include Enumerable
@@ -42,19 +18,17 @@ class Fileset
   end
 
   def each
-    return enum_for(:each) unless block_given? # Sparkling magic!
+    return enum_for(:each) unless block_given?
 
     resolve if @pending
+
+    previous_root = FileAwareString.folder_root
+    previous_file = FileAwareString.file
+
+    FileAwareString.folder_root = @root
     @files.each do |file|
-      String.send(:define_method, :_format_with_file) do
-        format_string_with_file(@root, file, self)
-      end
-      String.send(:define_method, :_get_root) do
-        @root
-      end
+      FileAwareString.file = file
       yield file
-      remove_method_from_class(String, :_format_with_file)
-      remove_method_from_class(String, :_get_root)
     end
   end
 end

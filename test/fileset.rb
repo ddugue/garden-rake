@@ -1,4 +1,5 @@
 require 'rake/garden/fileset2'
+require 'rake/garden/filepath'
 require 'rake/garden/ext/string'
 
 RSpec.describe Fileset do
@@ -21,15 +22,15 @@ RSpec.describe Fileset do
     fs = Fileset.new()
     fs << "a.txt"
     fs << "test.txt"
-    expect(fs.each.map { "prefix/%F".format_with_file! })\
+    expect(fs.each.map { FileAwareString.create("prefix/%F").to_s })\
       .to eq(["prefix/a.txt", "prefix/test.txt"])
-    expect(fs.map { "prefix/%F".format_with_file! })\
+    expect(fs.map { FileAwareString.create("prefix/%F").to_s })\
       .to eq(["prefix/a.txt", "prefix/test.txt"])
 
     fs = Fileset.new()
     fs << "a.txt"
     fs.each do |f|
-      expect("%F".format_with_file!).to eq("a.txt")
+      expect(FileAwareString.create("%f").to_s ).to eq("a.txt")
     end
   end
 end

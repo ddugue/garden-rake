@@ -1,1 +1,2 @@
 rspec -f d test/fileawarestring.rb
+rspec -f d test/fileset.rb
