@@ -34,3 +34,24 @@ RSpec.describe Fileset do
     end
   end
 end
+
+RSpec.describe GlobFileset do
+  after(:all) do
+    %x( rm -fr /tmp/globtest )
+  end
+
+  before(:all) do
+    %x( mkdir /tmp/globtest )
+  end
+
+  it "should list all files in a folder" do
+    %x( mkdir /tmp/globtest/prefix )
+    %x( touch /tmp/globtest/prefix/a.txt )
+    %x( touch /tmp/globtest/prefix/b.txt )
+
+    fs = GlobFileset.new("/tmp/globtest/**/*.txt")
+    expect(fs.to_a).to eq(["/tmp/globtest/prefix/a.txt",
+                           "/tmp/globtest/prefix/b.txt",
+                          ])
+  end
+end

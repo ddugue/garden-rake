@@ -30,11 +30,25 @@ class Fileset
       FileAwareString.file = file
       yield file
     end
+
+    FileAwareString.folder_root = previous_root
+    FileAwareString.file = previous_file
   end
 end
 
 class GlobFileset < Fileset
+  GLOB = Regexp.new(/^[^\*]*/)
 
+  def initialize(glob)
+    super
+    @glob = glob
+    @root ||= (GLOB.match(glob)[0] || '').to_s
+  end
+
+  def resolve
+    super
+    @files = (Dir.glob @glob).sort
+  end
 end
 
 class FileGroup
