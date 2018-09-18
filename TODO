@@ -9,25 +9,25 @@
 + Make set accept same syntax as cd
 + Make sync process all task that were before
 + Make result from command work
-
-+ Use LateTime and EarlyTime for time comparison
-
 + Move whitespace calculation to fn that accepts prefix
 + Improve echo message
-
 + Add Frozen string literal everywhere
 + On task title replace _ with space
 + When task has failed, make next run force with previous arguments
 + Need to take into account the command itself to evaluate if action must be rerun
 
-+ Add a before flag
++ Use LateTime and EarlyTime for time comparison
+
++ Create a Readme
+
++ Make work with dtrace
+
 + Add a force flag
++ Add a before flag
 + Add a method to get ALL prerequisite task output files
 + Add guards
 + Add flag to ignore error
 
-+ Create a Readme
 + Test with multitask
 
-+ Make work with dtrace
 + Test with cp, mv ruby version (instead of using subprocess) performance
