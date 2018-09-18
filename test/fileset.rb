@@ -30,7 +30,7 @@ RSpec.describe Fileset do
     fs = Fileset.new()
     fs << "a.txt"
     fs.each do |f|
-      expect(FileAwareString.create("%f").to_s ).to eq("a.txt")
+      expect(FileAwareString["%f"].to_s ).to eq("a.txt")
     end
   end
 end
@@ -117,5 +117,12 @@ RSpec.describe FilesetGroup do
   it "should work with a fileset and a string" do
     fg = FilesetGroup.new(GlobFileset.new("/tmp/globtest/**/*.txt"), "/tmp/globtest/ddugue")
     expect(fg.to_a).to eq(["/tmp/globtest/ddugue", "/tmp/globtest/prefix/a.txt", "/tmp/globtest/prefix/b.txt"])
+  end
+
+  it "should create a file aware string" do
+    FileAwareString.file = "a.txt"
+    fg = FilesetGroup.new("%f")
+    expect(fg.to_a).to eq(["a.txt"])
+    FileAwareString.file = nil
   end
 end

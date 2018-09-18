@@ -45,8 +45,8 @@ class GlobFileset < Fileset
 
   def initialize(glob)
     super
-    @glob = glob
-    @folder_root ||= (GLOB.match(glob)[0] || '').to_s
+    @glob = glob.to_s
+    @folder_root ||= (GLOB.match(@glob)[0] || '').to_s
   end
 
   def resolve
@@ -66,11 +66,12 @@ class FilesetGroup
     if fileset.is_a? Fileset
       @filesets.unshift fileset
     elsif fileset.is_a? String
+      str = FileAwareString.create(fileset)
 
-      if GlobFileset.is_glob(fileset)
-        @filesets.unshift GlobFileset.new(fileset)
+      if GlobFileset.is_glob(str)
+        @filesets.unshift GlobFileset.new(str)
       else
-        @orphans.unshift(fileset)
+        @orphans.unshift(str)
       end
     else
       fileset.each { |fs| append_fileset(fs) }
@@ -92,10 +93,8 @@ class FilesetGroup
 
   def each
     return enum_for(:each) unless block_given?
-    puts "#{@filesets}"
     @filesets.each do |fs|
       fs.each do |file|
-        puts "#{file}"
         yield file
       end
     end

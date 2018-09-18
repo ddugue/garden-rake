@@ -18,10 +18,14 @@ class FileAwareString
       @folder_root ? @file.to_s.sub(@folder_root, '').sub(File.basename(@file), '') : ''
   end
 
+  def include?(other_string)
+    @string.include? other_string
+  end
+
   def format_string_with_file
     return @string if @formatted
     @formatted = true
-    @string.gsub!(/%[bBfFnpxdDX]/) do |s|
+    @string.gsub!(/%[bBfFpxdD]/) do |s|
       case s.to_s
       when '%f' then prefix + File.basename(@file)
       when '%F' then File.basename(@file)
@@ -33,18 +37,31 @@ class FileAwareString
       when '%p' then @file
       end
     end
+    return @string
   end
 
   def to_s
     format_string_with_file
   end
 
+  def ==(other)
+    return other == to_s if other.is_a? String
+    return other.to_s == to_s if other.is_a? FileAwareString
+    false
+  end
+
   class << self
     attr_accessor :file
     attr_accessor :folder_root
 
+    ##
+    # Shortcut function to create a file aware string based on the current context
     def create(string)
-      self.new(self.folder_root, self.file, string)
+      new(self.folder_root, self.file, string)
+    end
+
+    def [](string)
+      create(string)
     end
   end
 end

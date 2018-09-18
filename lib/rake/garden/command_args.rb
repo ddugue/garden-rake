@@ -1,64 +1,98 @@
+# frozen_string_literal: true
+
 ##
 # Small data structure to pass Arguments to an SH Command
-class Args
+class ParsingError < StandardError
   attr_reader :args
 
+  def initialize(args, message = nil)
+    @args = args
+    @message = message
+  end
+
+  ##
+  # Log syntax error
+  def log(logger)
+    logger.error(@message) if @message
+    logger.error(@args.syntax)
+  end
+end
+
+##
+# Abstract object used to parse function arguments.
+# Allow a form of overriding to provide different syntax for function calling.
+class CommandArgs
+  attr_reader :args
+  attr_reader :kwargs
+
+  FILE_PATTERNS = <<~FILEPATTERNS
+    * a single filename
+    * a glob reprensenting multiple files
+    * an enumerable object (ie the files object)
+    * a literal array mixing glob/filenames
+  FILEPATTERNS
+
   def initialize(*args, **kwargs)
-    if args[0].is_a? Args
-      @args = args[0].args
-    else
-      @args = []
-    end
-
-    args.each do |arg|
-      push arg if (arg.is_a? String) || (arg.is_a? Array)
-    end
-
+    @args = args
     @kwargs = kwargs
   end
 
-  def push(arg)
-    arg.format_with_file! if arg.is_a? String
-    arg.map!(&:format_with_file!) if arg.is_a? Array
-    @args.push(arg)
-  end
-
+  ##
+  # Returns the length of the positional arguments
   def length
     @args.length
   end
 
+  ##
+  # Return wether the actual command args are valid
+  # Raises a Parsing Error if the syntax is invalid
+  def validate; end
 
+  ##
+  # Get value from args or kwargs if it is a symbol
+  def get(index)
+    @args[index]
+  end
+
+  ##
+  # Compare equality based on command args and kwargs
+  def ==(other)
+    return false unless other.is_a? CommandArgs
+    @args == other.args && @kwargs == other.kwargs
+  end
+
+  ##
+  # Append object to args
   def >>(other)
-    push other
+    @args.push(other)
     self
   end
-end
 
-##
-# Args used for sh calls (cp, sh, mv, etc...)
-class ShArgs < Args
-  ##
-  # Return a fileset of files a
-  def input
-    return nil unless length >= 2
-    return FileSet.new(@args[0])
-  end
+  class << self
+    # syntax should be a multiline string to instruct on the usage of
+    # the command
+    attr_accessor :syntax
 
-  def output
-    return nil unless length >= 3
-    return FileSet.new(@args[-1])
-  end
-
-  def command
-    case length
-    when 1 then @args[0]
-    when 2 then @args[1]
-    when 3 then @args[1]
+    ##
+    # Create a new command args based on a command args
+    def from(args)
+      new(*args.args, **args.kwargs)
     end
   end
 end
 
 ##
-# Args used for
-class ChainArgs < Args
+# Overriding string class to provide helper for our dsl
+class String
+  def >>(other)
+    CommandArgs.new self, other
+  end
+end
+
+##
+# Overriding Array class to provide helper for our dsl
+class Array
+  def >>(other)
+    CommandArgs.new self, other
+  end
 end

@@ -1,2 +1,5 @@
 rspec -f d test/fileawarestring.rb
 rspec -f d test/fileset.rb
+rspec -f d test/args.rb
+rspec -f d test/sh.rb
+rspec -f d test/logger.rb

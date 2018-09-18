@@ -2,6 +2,7 @@ require 'open3'
 require 'time'
 
 require 'rake/garden/ext/file'
+require 'rake/garden/filepath'
 
 require 'rake/garden/command'
 require 'rake/garden/command_args'
@@ -10,16 +11,57 @@ module Garden
   MAX_TIME = Time.at(12_147_483_647)
   MIN_TIME = Time.at(0)
 
+  class ShArgs < CommandArgs
+    @syntax = <<~SYNTAX
+      Make sure you have the right syntax for command 'sh'
+      The acceptable forms for sh are the following:
+      * sh 'no_input_output_cmd --arg 7' (for commands with no output, no input)
+      * sh 'input_files' >> 'no_output_cmd --arg 7' (for commands with no output)
+      * sh 'input_files', 'no_output_cmd --arg 7' (for commands with no output)
+      * sh 'input_files' >> 'no_output_cmd --arg 7' >> 'output_files'
+      * sh 'input_files', 'no_output_cmd --arg 7', 'output_files'
+
+      Where 'input_files' and 'output_files' are file patterns:
+      #{CommandArgs::FILE_PATTERNS}
+    SYNTAX
+
+    def validate
+      raise ParsingError(self) if (length == 0 or length > 3)
+    end
+
+    ##
+    # Return a fileset group for input files
+    def input
+      FilesetGroup.new(length >= 2 ? get(0) : nil)
+    end
+
+    ##
+    # Return a fileset group for output files
+    def output
+      FilesetGroup.new(length >= 3 ? get(-1) : nil)
+    end
+
+    ##
+    # Return a file aware string for the command
+    def command
+      str = length == 1 ? get(0) : get(1)
+      unless (str.is_a?(String) || str.is_a?(FileAwareString))
+        raise ParsingError(self, "The command must be a string")
+      end
+      FileAwareString.create(str)
+    end
+  end
+
   ##
   # Command that wraps an Open3 process
   class ShCommand < Command
-    def initialize(cmd=nil)
-      if (cmd)
-        @cmd = cmd.command
-        @input = cmd.input || []
-        @output = cmd.output || FileSet.new
-      end
+    @Args = ShArgs
+
+    def initialize(*args, **kwargs)
       super
+      @cmd = @args.command
+      @input = @args.input || []
+      @output = @args.output || []
     end
 
     def command

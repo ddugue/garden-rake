@@ -112,13 +112,10 @@ module Garden
       end
 
       ##
-      # Crop a long string with ...
-      def truncate_s(str, length = 30, ellipsis = '...')
-        if str.length > (length - 4)
-          str.to_s[0..(length - 4)].gsub(/[^\w]\w+\s*$/, ellipsis)
-        else
-          str
-        end
+      # Crop a long string with an ellipsis
+      def truncate(str, length = 30, ellipsis = '...')
+        return str unless str.length > length
+        str[0..(length - ellipsis.length - 1)] + ellipsis
       end
 
       ##
@@ -133,6 +130,17 @@ module Garden
         else
           "#{time.round(2)}s"
         end
+      end
+
+      def hierarchy(number, nbdigits: 3)
+        levels = number.to_s.count('.')
+        return "[#{number}] ".rjust nbdigits + 4 if levels == 0
+        return (' ' * levels * 4) + "└[#{number}] "
+      end
+
+      def align(prefix, center, suffix)
+        diff = terminal_width - (prefix + center + suffix).uncolorize.length
+        "#{prefix}#{center}#{' ' * diff}#{suffix}"
       end
 
       ##

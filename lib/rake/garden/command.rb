@@ -1,31 +1,57 @@
 require 'rake/garden/logger'
+require 'rake/garden/command_args'
 module Garden
   ##
   # AbstractCmd represent an abstract command that can be queued and run
   class Command
-    # FileSet of input files
-    attr_accessor :input_files
 
-    # Fileset of output files
-    attr_accessor :output_files
+    attr_accessor :input_files  # FileSet of input files
+    attr_accessor :output_files # Fileset of output files
 
-    attr_writer :workdir  # Workdirectory for command
-    attr_writer :env      # Environment variable
+    attr_writer :workdir        # Workdirectory for command
+    attr_writer :env            # Environment variables
 
-    attr_writer :loglevel # Log Level for messages
+    # initialize and parse args
+    # -- modify command
+    # run
+    # result
+    # log
+    # input_files
+    # output_files
 
-    def initialize(*_args, workdir: nil, env: nil, **kwargs)
-      @workdir = workdir || Dir.pwd
-      @env = env || {}
-      @linenumber = caller_locations.find do |loc|
+    ##
+    # Parse arguments received by the initializer
+    def parse_args(args, kwargs)
+      command_args = self.class.Args.new(*args, **kwargs)
+      command_args.validate
+      command_args
+    end
+
+    ##
+    # Get the line number from which this command was invoked in the rakefile
+    def get_line_number
+      location = caller_locations.find do |loc|
         loc.path.include? 'rakefile'
-      end.lineno
+      end
+      location ? location.lineno : 0
+    end
+
+    def initialize(*args, **kwargs)
+      @workdir = nil
+      @env = nil
+      @linenumber = get_line_number
+
+      begin
+        parse_args(*args, **kwargs)
+      rescue ParsingError => error
+        @syntax_error = error
+      end
     end
 
     ##
     # Returns wether there was an error in the execution
     def error?
-      false
+      (!@syntax_error.nil?) || false
     end
 
     ##
@@ -86,7 +112,8 @@ module Garden
       prefix_size, prefix = status_prefix parent
       suffix_size, suffix = status_suffix
       size = Logger.terminal_width - (suffix_size + prefix_size) + 9
-      cmd = "'#{Logger.truncate_s(to_s, size - 11).colorize(status_color)}'"
+      text = @syntax_error ? "Syntax error" : to_s
+      cmd = "'#{Logger.truncate_s(text, size - 11).colorize(status_color)}'"
       cmd = cmd.ljust size
       "#{prefix} #{cmd} #{suffix} "
     end
@@ -95,6 +122,7 @@ module Garden
     # Log command result
     def log(logger, parent = nil)
       logger.info(status(parent))
+      @syntax_error.log(logger) unless @syntax_error.nil?
     end
 
     ##
@@ -127,5 +155,7 @@ module Garden
     def result
       nil
     end
+
+    class << self; attr_accessor :Args end
   end
 end
