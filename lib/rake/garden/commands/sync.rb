@@ -26,7 +26,7 @@ module Garden
 
       index = 1
       @queue.each do |command|
-        command.run index
+        command.run "#{@order}.#{index}"
         sleep(0.001) while command.wait.nil?
         index += 1
       end

@@ -1,3 +1,4 @@
+# coding: utf-8
 require 'rake/garden/logger'
 RSpec.describe Garden::Logger, "#truncate"do
   it "should always unalter the string when shorter" do
@@ -28,5 +29,17 @@ RSpec.describe Garden::Logger, "#align"do
   it "should align the suffix to the end of the line with colored strings" do
     allow(Garden::Logger).to receive(:terminal_width).and_return(25)
     expect(Garden::Logger.align("PREFIX".blue, "MIDDLE".red, "SUFFIX")).to eq("PREFIX".blue + "MIDDLE".red + "       SUFFIX")
+  end
+end
+
+RSpec.describe Garden::Logger, "#hierarchy"do
+  it "should work with int" do
+    expect(Garden::Logger.hierarchy 2).to eq("   [2] ")
+  end
+  it "should work with str" do
+    expect(Garden::Logger.hierarchy "2").to eq("   [2] ")
+  end
+  it "should work with sub" do
+    expect(Garden::Logger.hierarchy "2.2").to eq("    └[2.2] ")
   end
 end

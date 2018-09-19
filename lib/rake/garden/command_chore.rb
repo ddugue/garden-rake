@@ -28,6 +28,19 @@ module Garden
       super
     end
 
+    def wait_for(id=:all)
+      completed = false
+      until completed
+        @queue.each do |process|
+          process.tick
+
+          completed = !process.running? & completed if id == :all
+          completed = !process.running? if id == process.id
+        end
+        sleep(0.0001)
+      end
+    end
+
     ##
     # Wait for all task to complete
     def wait

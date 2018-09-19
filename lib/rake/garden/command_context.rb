@@ -41,13 +41,13 @@ module CommandsContext
   ##
   # Create synchronously a folder
   def mkdir(folder)
-    queue MakeDirCommand.new(folder)
+    queue MakeDirCommand.new(self, folder)
   end
 
   ##
   # Echo a simple message in the async context
   def echo(*args)
-    queue EchoCommand.new(*args)
+    queue EchoCommand.new(self, *args)
   end
 
   ##
@@ -72,20 +72,20 @@ module CommandsContext
   ##
   # Copy file -> location
   def cp(file, name)
-    queue CopyCommand.new(file, name)
+    queue CopyCommand.new(self, file, name)
   end
 
   ##
   # Run a shell command
   def sh(*args)
-    queue ShCommand.new(ShArgs.new(*args))
+    queue ShCommand.new(self, ShArgs.new(*args))
   end
 
   def strace(*args)
-    queue StraceCommand.new(ShArgs.new(*args))
+    queue StraceCommand.new(self, ShArgs.new(*args))
   end
 
   def daemon(cmd)
-    queue DaemonCommand.new(cmd)
+    queue DaemonCommand.new(self, cmd)
   end
 end

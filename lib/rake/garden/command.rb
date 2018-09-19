@@ -11,13 +11,12 @@ module Garden
     attr_writer :workdir        # Workdirectory for command
     attr_writer :env            # Environment variables
 
-    # initialize and parse args
-    # -- modify command
-    # run
-    # result
-    # log
-    # input_files
-    # output_files
+
+    ##
+    # We use the start order as the ID for the command
+    def id
+      @order
+    end
 
     ##
     # Parse arguments received by the initializer
@@ -36,13 +35,15 @@ module Garden
       location ? location.lineno : 0
     end
 
-    def initialize(*args, **kwargs)
+    def initialize(parent, *args, **kwargs)
+      @parent = parent
+
       @workdir = nil
       @env = nil
       @linenumber = get_line_number
 
       begin
-        parse_args(*args, **kwargs)
+        parse_args(args, kwargs)
       rescue ParsingError => error
         @syntax_error = error
       end
@@ -62,14 +63,9 @@ module Garden
 
     ##
     # Render the prefix of the status
-    # If parent is provided, it means it should log as a sub-entry
     # The prefix consist of the queue number, and the source of the execution
-    def status_prefix(parent = nil)
-      pos = Logger.render_index @order, parent
-      [
-        pos.length + @linenumber.to_s.length + 10,
-        "#{pos} rakefile:#{@linenumber.to_s.bold}"
-      ]
+    def status_prefix()
+      "#{Logger.hierarchy @order}rakefile:#{@linenumber.to_s.bold}"
     end
 
     ##
@@ -99,61 +95,65 @@ module Garden
     ##
     # Return the suffix of the status long info
     def status_suffix
-      time = Logger.render_time(@time).to_s.blue
-      [
-        status_text.length + 7 + 6,
-        "[#{status_text.colorize(status_color)}] ... #{time}"
-      ]
+      time = Logger.render_time(time).to_s.blue
+      "[#{status_text.colorize(status_color)}] ... #{time}"
     end
 
     ##
     # Return the status message fo the command
-    def status(parent = nil)
-      prefix_size, prefix = status_prefix parent
-      suffix_size, suffix = status_suffix
-      size = Logger.terminal_width - (suffix_size + prefix_size) + 9
+    def status()
+      prefix = status_prefix
+      suffix = status_suffix
+      max_size = Logger.terminal_width \
+                 - (suffix.uncolorize.length + 2 + prefix.uncolorzie.length)
       text = @syntax_error ? "Syntax error" : to_s
-      cmd = "'#{Logger.truncate_s(text, size - 11).colorize(status_color)}'"
-      cmd = cmd.ljust size
-      "#{prefix} #{cmd} #{suffix} "
+      cmd = "'#{Logger.truncate(text, max_size).colorize(status_color)}'"
+
+      Logger.align(prefix, cmd, suffix)
     end
 
     ##
     # Log command result
-    def log(logger, parent = nil)
-      logger.info(status(parent))
+    def log(logger)
+      logger.info(status)
       @syntax_error.log(logger) unless @syntax_error.nil?
     end
 
     ##
-    # Run the command
-    # We don't include it in initialize. It allows to set up some intermediary
-    # variable
-    def run(order)
+    # Start the execution of the command
+    def start(order)
       @order = order
-      @time = 0 if skip?
       self
     end
 
     ##
-    # Wait and set the time it took to execute
-    # Does not actually wait for the command to complete. Sets the time if the
-    # command completed. By default it is instataneous. Will return nil if
-    # command is not done
-    def wait
-      @time ||= 0
+    # Tick checks the status of the command and triggers related events
+    # is meant to be called by parent
+    def tick; end
+
+    ##
+    # Returns wether the command is actually running
+    def running?
+      false
+    end
+
+    ##
+    # Wait and return the result of this command
+    def result
+      @parent.wait_for(id)
+      nil
+    end
+
+    ##
+    # Return the time it took to execute the command
+    def time
+      0
     end
 
     ##
     # Render a readeable version of the command
     def to_s
       'Abstract Command'
-    end
-
-    ##
-    # Wait and return the result of this command
-    def result
-      nil
     end
 
     class << self; attr_accessor :Args end
