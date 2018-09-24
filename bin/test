@@ -1,1 +1,1 @@
-cd test && touch ../../garden-stake/tests/test.ini && BOO=False rake -f ../etc/rakefile  bam -- --custom-debug
+cd test && touch ../../garden-stake/tests/test.ini && BOO=False rake -f ../etc/rakefile booty -- --custom-debug

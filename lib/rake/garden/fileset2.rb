@@ -73,7 +73,7 @@ class FilesetGroup
       else
         @orphans.unshift(str)
       end
-    else
+    elsif fileset.is_a? Enumerable
       fileset.each { |fs| append_fileset(fs) }
     end
   end

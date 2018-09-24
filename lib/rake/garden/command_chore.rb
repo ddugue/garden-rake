@@ -2,6 +2,7 @@ require 'rake/garden/noop'
 require 'rake/garden/chore'
 require 'rake/garden/file_chore'
 require 'rake/garden/commands/sync'
+require 'rake/garden/async'
 require 'rake/garden/command_context'
 
 module Garden
@@ -10,6 +11,7 @@ module Garden
   ##
   class CommandChore < Chore
     include CommandsContext
+    include AsyncManager
 
     def lookup_prerequisite(prerequisite_name) # :nodoc:
       if prerequisite_name == true || prerequisite_name == 'true'
@@ -23,52 +25,40 @@ module Garden
       end
     end
 
-    def initialize(task_name, app)
-      @skipped = 0
-      super
+    def asyncs
+      @queue
     end
+    # def initialize(task_name, app)
+    #   super
+    # end
 
-    def wait_for(id=:all)
-      completed = false
-      until completed
-        @queue.each do |process|
-          process.tick
+    # def wait_for(id=:all)
+    #   completed = false
+    #   until completed
+    #     completed = true
+    #     @queue.each do |process|
+    #       process.tick
+    #       completed = !process.running? & completed if id == :all
+    #       completed = !process.running? if id == process.id
+    #     end
+    #     sleep(0.0001)
+    #   end
+    # end
 
-          completed = !process.running? & completed if id == :all
-          completed = !process.running? if id == process.id
-        end
-        sleep(0.0001)
-      end
-    end
-
-    ##
-    # Wait for all task to complete
-    def wait
-      completed = false
-      until completed
-        completed = true
-        @queue.each do |cmd|
-          completed = !cmd.wait.nil? & completed
-        end
-        sleep(0.0001)
-      end
-    end
 
     ##
     # Start to run all command asynchronously
-    def run
-      @queue.each_with_index do |item, index|
-        item.run(index)
-      end
-    end
+    # def run
+    #   @queue.each_with_index { |item, index| item.start(index) }
+    # end
 
-    def skipped
-      @skipped ||= @queue.count(&:skip?) || 0
-    end
+    # def skipped
+    #   @skipped ||= @queue.count(&:skip?) || 0
+    # end
 
-    def succeeded?
-      @succeeded = @queue.none?(&:error?)
-    end
+    # def succeeded?
+    #   @succeeded = @queue.none?(&:error?)
+    # end
 
     def output_files
       @output_files ||= @queue \
@@ -79,28 +69,26 @@ module Garden
 
     ##
     # Output a string for the result
-    def result(time)
+    def status(max_size=nil)
       " Result for #{title}: " \
       + "Success? #{succeeded? ? 'Yes'.green : 'No'.red}, " \
-      + "Skipped: #{skipped.to_s.yellow}, " \
-      + "Total user time: #{time.blue}, " \
+      + "Skipped: #{skips.to_s.yellow}, " \
+      + "Total user time: #{Logger.render_time(time).blue}, " \
       + "Changed files: #{output_files.length.to_s.bold}"
     end
 
     def execute(args = nil)
       @logger.info ' '
       @logger.important " Running Task: #{title}"
-      start = Time.now
       super args
+      start
 
-      # Once the queue is filled we execute all the waiting commands
-      run && wait
-      time = Logger.render_time(Time.now - start)
+      result # This wait for all the commands for result
 
       @queue.each { |cmd| cmd.log(@logger) }
 
       @logger.info(@logger.line(char: '='))
-      @logger.important(result(time))
+      @logger.important(status)
       @logger.info(' ')
     end
 

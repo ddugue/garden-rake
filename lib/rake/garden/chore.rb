@@ -74,7 +74,13 @@ module Garden
 
     def invoke_with_call_chain(*args)
       @succeeded = true
-      super
+      begin
+        super
+      rescue ParsingError => error
+        @succeeded = false
+        @logger.error(@logger.line(char: '*'))
+        error.log(@logger)
+      end
       @logger.flush
       @metadata['last_executed'] = Time.now.to_i if @succeeded && needed?
       exit(1) unless @succeeded

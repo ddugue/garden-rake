@@ -104,6 +104,11 @@ module Garden
       @level >= DEBUG
     end
 
+    ##
+    # Pad based on the hierarchy level
+    def pad_for_hierarchy(number, message)
+      (" " * Logger.hierarchy(number).length) + message.to_s
+    end
     class << self
       ##
       # Return terminal width
@@ -132,10 +137,10 @@ module Garden
         end
       end
 
-      def hierarchy(number, nbdigits: 3)
+      def hierarchy(number, nbdigits: 3, tablevel: 4)
         levels = number.to_s.count('.')
-        return "[#{number}] ".rjust nbdigits + 4 if levels == 0
-        return (' ' * levels * 4) + "└[#{number}] "
+        return "[#{number}] ".rjust nbdigits + tablevel if levels == 0
+        return (' ' * levels * tablevel) + "└[#{number}] "
       end
 
       def align(prefix, center, suffix)
@@ -144,13 +149,9 @@ module Garden
       end
 
       ##
-      # Render a single index
-      def render_index(number, prefix = nil, nbdigits: 3)
-        if prefix
-          ' ' * 4 + "└[#{prefix}.#{number}]"
-        else
-          "[#{number}]".rjust nbdigits + 3
-        end
+      # Pad based on the hierarchy level
+      def pad_for_hierarchy(number, message)
+        (" " * hierarchy(number).length) + message.to_s
       end
     end
   end

@@ -13,59 +13,59 @@ options.test_env = env "boo", default: 24
 
 # options.from options.config
 
-a = chore :booty do
-  echo options.debug
-  echo options.verbose.to_s
-  echo options.test_env
+chore :booty do
+  sh "touch a.txt"
+  # echo options.verbose.to_s
+  # echo options.test_env
 end
 
-chore :bam => ["copy/*.txt"] do |t|
-  echo "Testing chore"
-  t.files.each do |f|
-    cp f, "sub/%f.2.txt"
-    sh "sleep 5 && echo 'DAN'"
-    # sh "echo 'Oops' && exit 1"
-    cd "sub"
-    cd ".."
-    set :PROBLEM, 'no'
-    sh f >> "echo $PROBLEM > sub/%b.dat" >> "sub/%b.dat"
-    unset :PROBLEM
-    sync do
-      cp f, "new/%b.boo"
-      sh "new/%b.boo" >> "rm new/%b.boo"
-    end
-  end
-end
+# chore :bam => ["copy/*.txt"] do |t|
+#   echo "Testing chore"
+#   t.files.each do |f|
+#     cp f, "sub/%f.2.txt"
+#     sh "sleep 5 && echo 'DAN'"
+#     # sh "echo 'Oops' && exit 1"
+#     cd "sub"
+#     cd ".."
+#     set :PROBLEM, 'no'
+#     sh f >> "echo $PROBLEM > sub/%b.dat" >> "sub/%b.dat"
+#     unset :PROBLEM
+#     sync do
+#       cp f, "new/%b.boo"
+#       sh "new/%b.boo" >> "rm new/%b.boo"
+#     end
+#   end
+# end
 
-chore :files => [true, "subs/**/*.txt"] do |t|
-  t.files.each do |f|
-    echo "File %b"
-    echo "File %B"
-    sync do
-      echo "File %d"
-      echo "File %D"
-    end
-  end
-end
+# chore :files => [true, "subs/**/*.txt"] do |t|
+#   t.files.each do |f|
+#     echo "File %b"
+#     echo "File %B"
+#     sync do
+#       echo "File %d"
+#       echo "File %D"
+#     end
+#   end
+# end
 
 
-chore :strace do |t|
-  puts "In Strace"
-  set :TEST => false
-  strace "cp new.txt new.2.txt"
-  strace "mv new.2.txt new.3.txt"
-  strace "echo 'ALIBABA'"
-  cd "../../garden-stake"
+# chore :strace do |t|
+#   puts "In Strace"
+#   set :TEST => false
+#   strace "cp new.txt new.2.txt"
+#   strace "mv new.2.txt new.3.txt"
+#   strace "echo 'ALIBABA'"
+#   cd "../../garden-stake"
 
-  strace "python -m stake.loader tests/test.html -o tests/d/output.html -c tests/test.ini --verbose"
-end
+#   strace "python -m stake.loader tests/test.html -o tests/d/output.html -c tests/test.ini --verbose"
+# end
 
-chore :test => [:bam, :booty] do |t|
-  t.files.each do |f|
-    puts "File changed #{f}"
-  end
-end
+# chore :test => [:bam, :booty] do |t|
+#   t.files.each do |f|
+#     puts "File changed #{f}"
+#   end
+# end
 
-chore :service do
-  daemon "python timer.py"
-end
+# chore :service do
+#   daemon "python timer.py"
+# end

@@ -22,13 +22,13 @@ module CommandsContext
     @queue = []
     @workdir = Pathname.new(Pathname.pwd)
     @env = {}
-    @command_index = 0 # Reference for command execution, see queue
     super
   end
 
   ##
   # Queue command for execution
-  def queue(command)
+  def queue(cls, args, kwargs)
+    command = cls.new(self, *args, **kwargs)
     command.workdir = @workdir
     command.env = @env.clone
 
@@ -77,8 +77,8 @@ module CommandsContext
 
   ##
   # Run a shell command
-  def sh(*args)
-    queue ShCommand.new(self, ShArgs.new(*args))
+  def sh(*args, **kwargs)
+    queue ShCommand, *args, **kwargs
   end
 
   def strace(*args)

@@ -3,6 +3,7 @@ require 'time'
 
 require 'rake/garden/ext/file'
 require 'rake/garden/filepath'
+require 'rake/garden/fileset2'
 
 require 'rake/garden/command'
 require 'rake/garden/command_args'
@@ -26,7 +27,7 @@ module Garden
     SYNTAX
 
     def validate
-      raise ParsingError(self) if (length == 0 or length > 3)
+      raise ParsingError.new(self) if (length == 0 or length > 3)
     end
 
     ##
@@ -46,7 +47,7 @@ module Garden
     def command
       str = length == 1 ? get(0) : get(1)
       unless (str.is_a?(String) || str.is_a?(FileAwareString))
-        raise ParsingError(self, "The command must be a string")
+        raise ParsingError.new(self, "The command must be a string")
       end
       FileAwareString.create(str)
     end
@@ -57,21 +58,23 @@ module Garden
   class ShCommand < Command
     @Args = ShArgs
 
-    def initialize(*args, **kwargs)
-      super
-      @cmd = @args.command
-      @input = @args.input || []
-      @output = @args.output || []
+    def parse_args(*args, **kwargs)
+      args = super
+
+      @cmd = args.command
+      @input = args.input
+      @output = args.output
     end
 
     def command
-      @cmd
+      @cmd.to_s
     end
 
     ##
     # Skip this command if all the input file are older than all the
     # output files
     def skip?
+      return true if super
       if @skip.nil?
         min_output = @output.map { |f| File.safe_mtime f }.min || MIN_TIME
         max_input = @input.map { |f| File.safe_mtime f }.max || MAX_TIME
@@ -89,54 +92,39 @@ module Garden
     ##
     # Returns wether there was an error in the execution
     def error?
-      @thread && @thread.value.exitstatus != 0
+      super || (@thread && @thread.value.exitstatus != 0)
     end
 
     ##
-    # Returns wether the execution is done and successful
-    def success?
-      @thread && @thread.value.exitstatus.zero?
+    # Returns wether the thread has finished executing
+    def completed?
+      # puts "#{@thread.status}"
+      @thread && !@thread.status
     end
 
-    ##
-    # Executes when the process is complete
-    def on_complete
-      @time ||= Time.now - @start
-    end
-
-    ##
-    # Wait for process to complete
-    # TODO: Make async process more developper friendy
-    # ADD completed flag, make time a property
-    # Merge wait and result
-    def wait
-      if @time.nil?
-         on_complete unless @thread.status
-      end
-      @time
-    end
-
-    ##
     # Wrapper for popen3
     def popen3
       Open3.popen3(@env, command, chdir: @workdir)
     end
 
-    def run(order)
-      @start = Time.now
-      @stdin, @stdout, @stderr, @thread = popen3 unless skip?
-      super
+    def process
+      @stdin, @stdout, @stderr, @thread = popen3
+    end
+
+    def running?
+      @thread && @thread.status
     end
 
     ##
     # Log stdout of the command
     def log_stdout(logger)
       return unless @stdout
-      whitespace = ' ' * 7
-      logger.debug "#{whitespace}Executing: #{@cmd}"
+
+      logger.debug logger.pad_for_hierarchy(@order, "Executing: #{@cmd}")
+
       @stdout.readlines.each do |line|
         line.strip!
-        logger.verbose("#{whitespace}#{line}") unless line.empty?
+        logger.verbose(logger.pad_for_hierarchy(@order, line)) unless line.empty?
       end
     end
 
@@ -144,6 +132,7 @@ module Garden
     # Log stderr of the command
     def log_stderr(logger)
       return unless error?
+
       logger.error "****** There was an error running #{to_s.bold}: ******"
       stderr = @stderr.read
 
@@ -154,22 +143,19 @@ module Garden
 
     ##
     # Log stdout and stderr after the regular log
-    def log(logger, prefix = nil)
+    def log(logger)
       super
       log_stdout(logger)
       log_stderr(logger)
     end
 
     def result
-      while @time.nil?
-        wait
-        sleep(0.01)
-      end
+      super
       @stdout
     end
 
     def to_s
-      @cmd
+      @cmd.to_s
     end
   end
 end

@@ -68,6 +68,14 @@ class CommandArgs
     self
   end
 
+  def to_s
+    "(#{self.class}) Args: #{@args}, Kwargs: #{@kwargs}"
+  end
+
+  def syntax
+    self.class.syntax
+  end
+
   class << self
     # syntax should be a multiline string to instruct on the usage of
     # the command
