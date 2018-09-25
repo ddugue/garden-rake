@@ -1,117 +1,88 @@
 # frozen_string_literal: true
 
-##
-# Represent an Async object lifecycle
-# - Start
-# - tick until completion by async manager
-# - on_complete callback
-module Async
-  attr_accessor :execution_order # Order of the execution of this async block
-  attr_accessor :manager
-
-  def completed?
-    !@start_time.nil?
-  end
-
-  def running?
-    !@start_time.nil? && @end_time.nil?
-  end
-
-  def error?
-    completed? && false
-  end
-
-  def succeeded?
-    completed? && !error?
-  end
-
-  def skip?
-    false
-  end
-
-  def result
-    manager&.wait_for(execution_order)
-    nil
-  end
-
-  def time
-    return 0 if skip?
-    @end_time - @start_time
-  end
-
-  def on_skip
-    @end_time = Time.now
-  end
-
-  def on_complete
-    @end_time = Time.now
-  end
-
-  def start(order = nil)
-    @start_time = Time.now
-    @execution_order = order
-    if skip?
-      on_skip
-    else
-      process
-    end
-    self
-  end
-
-  def tick
-    on_complete if completed? && @end_time.nil?
-  end
-
-  def status(max_width = nil); end
-  def process(); end
-end
-
-##
-# Async manager is a manager that executios other async object
-module AsyncManager
-  include Async
-
-  def asyncs
-    []
-  end
-
-  def process
-    asyncs.each_with_index { |item, index| item.start(index) }
-  end
-
-  def wait_for(id = :all)
-    until @completed
-      @completed = true
-      asyncs.each do |process|
-        process.tick
-        @completed = process.completed? & @completed if id == :all
-        @completed = process.completed? if id == process.execution_order
-      end
-      tick if id == :all
-      sleep(0.0001)
-    end
-  end
-
-  def result
-    wait_for :all
-  end
-
-  def completed?
-    @completed
-  end
-
+module Garden
   ##
-  # Return the number of async blocks that should be skipped
-  def skips
-    @skips ||= asyncs.count(&:skip?) || 0
-  end
+  # Represent an Async object lifecycle
+  # - Start its process or skip
+  # - Update status until completion by async manager
+  # - Call on_complete when done by tick
+  module AsyncLifecycle
+    attr_accessor :execution_order # Order of the execution of this async block
+    attr_accessor :manager # The manager responsible for executing the lifecycle
 
-  def successes
-    @successes ||= asyncs.count(&:succeeded?) || 0
-  end
+    # Start executing the lifecycle
+    def start(order = nil)
+      @start_time = Time.now
+      @execution_order = order
+      if skip?
+        on_skip
+      else
+        process
+      end
+      self
+    end
 
-  def succeeded?
-    @succeeded = asyncs.none?(&:error?) if @succeeded.nil?
-    @succeeded
+    # @abstract
+    # The AsyncLifecycle should implement a method process
+    # or else it will fail with name error
+
+    # Returns wether this object should skip its execution
+    def skip?
+      false
+    end
+
+    # Executes when the object is skipped
+    def on_skip
+      @end_time = Time.now
+    end
+
+    # +update_status+ method will be called repeatedly by the manager
+    # to ensure the lifecycle updates its status
+    def update_status
+      on_complete if completed? && @end_time.nil?
+    end
+
+    # Executed by +update_status+ when the task just completed
+    def on_complete
+      @end_time = Time.now
+    end
+
+    # Wait for result and returns the value
+    def result
+      manager&.wait_for(execution_order)
+      nil
+    end
+
+    # Returns the time it took to complete the lifecycle
+    def time
+      @end_time - @start_time
+    end
+
+    ##
+    # STATUS
+    # The following methods return the status of the lifecycle
+    ##
+    # Returns wether the lifecycle is completed
+    def completed?
+      !@start_time.nil?
+    end
+
+    # Returns wether the object is currently running and not completed
+    def running?
+      !@start_time.nil? && @end_time.nil?
+    end
+
+    # Returns wether there was an error in the execution
+    def error?
+      completed? && false
+    end
+
+    # Returns wether there was no error in the execution
+    def succeeded?
+      completed? && !error?
+    end
+    ##
+    # End of STATUS
+    ##
   end
 end
