@@ -1,4 +1,5 @@
 # coding: utf-8
+# frozen_string_literal: true
 
 require 'colorize'
 
@@ -25,7 +26,6 @@ module Garden
       @output = []
       @errors = []
     end
-
 
     # Print output to stdout and errors to stderr
     def flush
@@ -93,7 +93,7 @@ module Garden
     # Join all lines of text and ensures each one ends with \n
     def join(strings)
       sep = $\ || "\n"
-      strings.map do |s|
+      strings.map do |string|
         next if string.nil?
         string.end_with?(sep) ? string : string + sep
       end.join
@@ -133,8 +133,8 @@ module Garden
       # useful to display list
       def hierarchy(number, nbdigits: 3, tablevel: 4)
         levels = number.to_s.count('.')
-        return "[#{number}] ".rjust nbdigits + tablevel if levels == 0
-        return (' ' * levels * tablevel) + "└[#{number}] "
+        return "[#{number}] ".rjust nbdigits + tablevel if levels.zero?
+        (' ' * levels * tablevel) + "└[#{number}] " # When sub levels
       end
 
       # Align text with terminal witdth by making sure suffix is on the left
@@ -147,7 +147,7 @@ module Garden
       # Pad based on the hierarchy level, used to display information
       # under an item made prefixed with a +hierarchy+ block
       def pad_for_hierarchy(number, message)
-        (" " * hierarchy(number).length) + message.to_s
+        (' ' * hierarchy(number).length) + message.to_s
       end
     end
   end
