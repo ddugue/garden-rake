@@ -1,45 +1,75 @@
 # coding: utf-8
 require 'rake/garden/logger'
-RSpec.describe Garden::Logger, "#truncate"do
-  it "should always unalter the string when shorter" do
-    expect(Garden::Logger.truncate("this", 10).length).to eq(4)
+describe Garden::Logger do
+
+  describe ".truncate" do
+    context "with long sentence" do
+      let(:sentence) { subject.class.truncate("this is a longer sentence", 10, "....") }
+
+      it "should set the right length" do
+        expect(sentence.length).to eq(10)
+      end
+      it "should end with the suffix" do
+        expect(sentence).to end_with '....'
+      end
+    end
+
+    context "with short sentence" do
+      let(:sentence) { subject.class.truncate("this", 10, "....") }
+
+      it "should not alter length" do
+        expect(sentence.length).to eq(4)
+      end
+      it "should not end with suffix" do
+        expect(sentence).not_to end_with '....'
+      end
+    end
   end
 
-  it "should be the exact length set when longer" do
-    expect(Garden::Logger.truncate("this is a longer sentence", 10).length).to eq(10)
+  describe ".align" do
+    before(:example) do
+      allow(subject.class).to receive(:terminal_width).and_return(25)
+    end
+
+    context "without colored strings" do
+      let (:aligned) { subject.class.align("PREFIX", "MIDDLE", "SUFFIX") }
+
+      it "should align to size of the terminal" do
+        expect(aligned.length).to eq(25)
+      end
+      it "should be aligned to the right" do
+        expect(aligned).to eq("PREFIXMIDDLE       SUFFIX")
+      end
+    end
+
+    context "with colored strings" do
+      let (:aligned) { subject.class.align("PREFIX".blue, "MIDDLE".red, "SUFFIX") }
+
+      it "should be aligned to the right" do
+        expect(aligned).to eq("PREFIX".blue + "MIDDLE".red + "       SUFFIX")
+      end
+    end
   end
 
-  it "should end with characters when longer than max length" do
-    expect(Garden::Logger.truncate("this is a longer sentence", 10, "....").end_with? '....').to be(true)
-  end
-end
+  describe ".hierarchy" do
+    let (:result) { "   [2] " }
 
-RSpec.describe Garden::Logger, "#align"do
-  it "should override terminal size" do
-    allow(Garden::Logger).to receive(:terminal_width).and_return(85)
-    expect(Garden::Logger.terminal_width).to eq(85)
-  end
-  it "should align the suffix to the end of the line" do
-    allow(Garden::Logger).to receive(:terminal_width).and_return(25)
+    it "should work with int" do
+      expect(subject.class.hierarchy 2).to eq(result)
+    end
+    it "should work with str" do
+      expect(subject.class.hierarchy "2").to eq(result)
+    end
 
-    aligned = Garden::Logger.align("PREFIX", "MIDDLE", "SUFFIX")
-    expect(aligned.length).to eq(25)
-    expect(aligned).to eq("PREFIXMIDDLE       SUFFIX")
-  end
-  it "should align the suffix to the end of the line with colored strings" do
-    allow(Garden::Logger).to receive(:terminal_width).and_return(25)
-    expect(Garden::Logger.align("PREFIX".blue, "MIDDLE".red, "SUFFIX")).to eq("PREFIX".blue + "MIDDLE".red + "       SUFFIX")
-  end
-end
+    context "with sub" do
+      let (:result) { "    └[2.2] " }
 
-RSpec.describe Garden::Logger, "#hierarchy"do
-  it "should work with int" do
-    expect(Garden::Logger.hierarchy 2).to eq("   [2] ")
-  end
-  it "should work with str" do
-    expect(Garden::Logger.hierarchy "2").to eq("   [2] ")
-  end
-  it "should work with sub" do
-    expect(Garden::Logger.hierarchy "2.2").to eq("    └[2.2] ")
+      it "should work with float" do
+        expect(subject.class.hierarchy 2.2).to eq(result)
+      end
+      it "should work with str" do
+        expect(subject.class.hierarchy "2.2").to eq(result)
+      end
+    end
   end
 end
