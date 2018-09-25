@@ -120,7 +120,7 @@ module Garden
 
       ##
       # Render a time with max 6 char
-      def render_time(time)
+      def time(time)
         if time < 10
           "#{time.round(3)}s"
         elsif time >= 3600
