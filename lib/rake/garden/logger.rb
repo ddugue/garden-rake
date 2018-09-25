@@ -22,12 +22,6 @@ module Garden
     end
 
     ##
-    # Return a line of character
-    def line(char: '-')
-      ' ' + char * (Logger.terminal_width - 2) + ' '
-    end
-
-    ##
     # Join all stream of text into
     def join(strings)
       sep = $\ || "\n"
@@ -104,12 +98,13 @@ module Garden
       @level >= DEBUG
     end
 
-    ##
-    # Pad based on the hierarchy level
-    def pad_for_hierarchy(number, message)
-      (" " * Logger.hierarchy(number).length) + message.to_s
-    end
     class << self
+      ##
+      # Return a line of character
+      def line(char: '-')
+        ' ' + char * (Logger.terminal_width - 2) + ' '
+      end
+
       ##
       # Return terminal width
       def terminal_width
