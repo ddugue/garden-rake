@@ -1,110 +1,102 @@
-require 'rake/garden/command_args'
-require 'rake/garden/ext/string'
+require 'rake/garden/filepath'
 
-##
-# Methods to work with our custom
-module Garden
-  def format_string_with_file(root, file, string)
-    string.gsub!(/%[bBfFnpxdDX]/) do |s|
-      prefix = file.to_s.sub(root, '').sub(File.basename(file), '')
-      case s.to_s
-      when '%f' then prefix + File.basename(file)
-      when '%F' then File.basename(file)
-      when '%b' then prefix + File.basename(file, '.*')
-      when '%B' then File.basename(file, '.*')
-      when '%x' then File.extname(file)
-      when '%d' then prefix
-      when '%D' then File.dirname(file)
-      when '%p' then file
-      end
+class Fileset
+  include Enumerable
+
+  def initialize(*args)
+    @files = []
+    @pending = true
+    @folder_root = nil
+  end
+
+  def resolve
+    @pending = false
+  end
+
+  def <<(file)
+    if file.is_a? Array
+      @files = file
+    else
+      @files << file
     end
   end
 
-  ##
-  # Safe remove a method from a class
-  def remove_method_from_class(cls, method_name)
-    return unless cls.method_defined? method_name
-    cls.remove_method method_name
-  end
+  def each
+    return enum_for(:each) unless block_given?
 
-  ##
-  # Decorator function to allow string interpolation of filenames
-  ##
-  def with_file(root, file)
-    String.send(:define_method, :_format_with_file) do
-      format_string_with_file(root, file, self)
+    resolve if @pending
+
+    previous_root = FileAwareString.folder_root
+    previous_file = FileAwareString.file
+
+    FileAwareString.folder_root = @folder_root
+    @files.each do |file|
+      FileAwareString.file = file
+      yield file
     end
-    $CURRENT_FILE = file
-    $CURRENT_ROOT = root
-    yield file
-    $CURRENT_FILE = nil
-    $CURRENT_ROOT = nil
-    remove_method_from_class(String, :_format_with_file)
+
+    FileAwareString.folder_root = previous_root
+    FileAwareString.file = previous_file
+  end
+end
+
+class GlobFileset < Fileset
+  GLOB = Regexp.new(/^[^\*]*/)
+
+  def initialize(glob)
+    super
+    @glob = glob.to_s
+    @folder_root ||= (GLOB.match(@glob)[0] || '').to_s
   end
 
-  ##
-  # Class used to decorate the each method with our magic_format method
-  ##
-  class FileSet < Set
-    GLOB = Regexp.new(/^[^\*]*/)
+  def resolve
+    super
+    @files = (Dir.glob @glob).sort
+  end
 
-    def initialize(glob=nil)
-      @filesets = []
-      @pwd = Dir.pwd
-      if glob.is_a? String
-        @glob = glob
-        super(Dir.glob glob)
-      elsif glob.is_a? Enumerable
-        super(glob.map { |g| Dir.glob(g) }.flatten)
+  def self.is_glob(path)
+    path.include? "*"
+  end
+end
+
+class FilesetGroup
+  include Enumerable
+
+  def append_fileset(fileset)
+    if fileset.is_a? Fileset
+      @filesets.unshift fileset
+    elsif fileset.is_a? String
+      str = FileAwareString.create(fileset)
+
+      if GlobFileset.is_glob(str)
+        @filesets.unshift GlobFileset.new(str)
       else
-        super
+        @orphans.unshift(str)
       end
+    elsif fileset.is_a? Enumerable
+      fileset.each { |fs| append_fileset(fs) }
     end
+  end
 
-    def join(sep)
-      @filesets.map(&:to_a).flatten.concat(to_a).join sep
-    end
+  def initialize(*args)
+    @filesets = []
+    @orphans = []
 
-    def glob
-      @glob ||= ''
-    end
-    ##
-    # Return the root of the glob pattern
-    # For instance in src/**/* the root would be pwd + src
-    def root
-      @root ||= (GLOB.match(glob)[0] || '').to_s
-    end
-    ##
-    # Fix to prevent ruby from memoizing magic_format when calling any?
-    def any?
-      super
-      remove_method_from_class(String, :_format_with_file)
-    end
+    append_fileset(args)
 
-    def each(&block)
-      super do |f|
-        with_file root, f, &block if File.file? f
+    unless @orphans.empty?
+      fs = Fileset.new
+      fs << @orphans
+      @filesets.unshift(fs)
+    end
+  end
+
+  def each
+    return enum_for(:each) unless block_given?
+    @filesets.each do |fs|
+      fs.each do |file|
+        yield file
       end
-      @filesets.each do |fs|
-        puts "ROOT #{fs} #{fs.root}"
-        fs.each &block
-      end
-    end
-
-    def anchor(fileset)
-      @filesets.push(fileset)
-    end
-
-    def filesets
-      @filesets
-    end
-
-    def format_with_file!
-      self
-    end
-
-    def >>(other)
-      Args.new format_with_file!, other.format_with_file!
     end
   end
 end
