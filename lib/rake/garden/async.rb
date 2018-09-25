@@ -14,11 +14,7 @@ module Garden
     def start(order = nil)
       @start_time = Time.now
       @execution_order = order
-      if skip?
-        on_skip
-      else
-        process
-      end
+      skip? ? on_skip : process
       self
     end
 

@@ -1,6 +1,5 @@
-require 'rake/garden/fileset2'
-require 'rake/garden/filepath'
-require 'rake/garden/ext/string'
+require 'rake/garden/fileset'
+require 'rake/garden/fileaware_string'
 
 RSpec.describe Fileset do
   it "should be transparent to a simple list" do
