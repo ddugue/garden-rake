@@ -1,3 +1,28 @@
++ Document well lifecyle of async object
++ Test async object
++ Test env parser
++ Test options
+
++ Refactor test files
+
++ Make everything inside Garden module
++ Split Async Manager and async
++ Split multiple filesets
+
++ Refactor chore
++ Refactor chore_commands
++ Change all chore -> chore_
++ Refactor sh
+
++ Refactor metadata, Investigate method to proxy hash commands to data
+
++ Change command_context -> commands_dsl
++ Move strace to commands
+
+
+
+
+############
 + Add Filepath class
 + Add test
 

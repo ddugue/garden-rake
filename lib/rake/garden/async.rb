@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 ##
-# Represent an Async object lifecycl
+# Represent an Async object lifecycle
 # - Start
 # - tick until completion by async manager
 # - on_complete callback
@@ -39,8 +39,8 @@ module Async
     @end_time - @start_time
   end
 
-  def on_end(&block)
-    @on_complete.push(block)
+  def on_skip
+    @end_time = Time.now
   end
 
   def on_complete
@@ -50,7 +50,11 @@ module Async
   def start(order = nil)
     @start_time = Time.now
     @execution_order = order
-    process unless skip?
+    if skip?
+      on_skip
+    else
+      process
+    end
     self
   end
 
@@ -59,7 +63,6 @@ module Async
   end
 
   def status(max_width = nil); end
-
   def process(); end
 end
 
@@ -68,9 +71,9 @@ end
 module AsyncManager
   include Async
 
-  # def asyncs
-  #   []
-  # end
+  def asyncs
+    []
+  end
 
   def process
     asyncs.each_with_index { |item, index| item.start(index) }
@@ -97,6 +100,8 @@ module AsyncManager
     @completed
   end
 
+  ##
+  # Return the number of async blocks that should be skipped
   def skips
     @skips ||= asyncs.count(&:skip?) || 0
   end

@@ -7,8 +7,7 @@ require 'rake/garden/command_context'
 
 module Garden
   ##
-  # Chore that decorate
-  ##
+  # Chore that is meant to contain +Command+
   class CommandChore < Chore
     include CommandsContext
     include AsyncManager
@@ -87,7 +86,7 @@ module Garden
 
       @queue.each { |cmd| cmd.log(@logger) }
 
-      @logger.info(@logger.line(char: '='))
+      @logger.info(Logger.line(char: '='))
       @logger.important(status)
       @logger.info(' ')
     end

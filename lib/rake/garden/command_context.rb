@@ -1,7 +1,5 @@
 require 'pathname'
 
-require 'rake/garden/command_args'
-
 require 'rake/garden/commands/echo'
 require 'rake/garden/commands/set'
 require 'rake/garden/commands/unset'
@@ -12,7 +10,7 @@ require 'rake/garden/commands/mkdir'
 require 'rake/garden/commands/daemon'
 
 ##
-# Represent a context that enables to create a custom dsl to queue
+# Represent a dsl that allows to queue commands
 # commands
 module CommandsContext
   attr_accessor :workdir # Actual work directory of the chore
@@ -28,9 +26,11 @@ module CommandsContext
   ##
   # Queue command for execution
   def queue(cls, args, kwargs)
-    command = cls.new(self, *args, **kwargs)
-    command.workdir = @workdir
-    command.env = @env.clone
+    command = cls.new(*args, **kwargs)
+
+    command.manager = self     if self.is_a? AsyncManager
+    command.workdir = @workdir if @workdir
+    command.env = @env.clone   if @env
 
     @logger.debug(" Queuing '#{command}'") if @logger
 
