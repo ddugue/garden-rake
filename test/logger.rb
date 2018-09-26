@@ -75,9 +75,56 @@ describe Garden::Logger do
   end
 
   describe '.line' do
+    before(:example) do
+      allow(subject.class).to receive(:terminal_width).and_return(5)
+    end
+
+    let(:line) { subject.class.line }
+    it 'should be a single line' do
+      expect(line).to eq(' --- ')
+    end
+    it 'should be the length of the terminal' do
+      expect(line.length).to eq(5)
+    end
+    context 'with custom char' do
+      let(:line) { subject.class.line(char: '*') }
+      it 'should be a single line of the same char' do
+        expect(line).to eq(' *** ')
+      end
+    end
   end
 
   describe '.time' do
+    context 'with 0 seconds' do
+      let(:time) { subject.class.time(0) }
+      it 'should be max 6 char' do
+        expect(time.length).to be <= 6
+      end
+    end
+    context 'with less than 10 seconds' do
+      let(:time) { subject.class.time(9) }
+      it 'should be max 6 char' do
+        expect(time.length).to be <= 6
+      end
+    end
+    context 'with less than a minute' do
+      let(:time) { subject.class.time(59) }
+      it 'should be max 6 char' do
+        expect(time.length).to be <= 6
+      end
+    end
+    context 'with less than a hour' do
+      let(:time) { subject.class.time(60 * 60 - 1) }
+      it 'should be max 6 char' do
+        expect(time.length).to be <= 6
+      end
+    end
+    context 'with more than a hour' do
+      let(:time) { subject.class.time(60 * 60 + 1) }
+      it 'should be max 6 char' do
+        expect(time.length).to be <= 6
+      end
+    end
   end
 
   describe '.pad_for_hierarchy' do

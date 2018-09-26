@@ -99,10 +99,13 @@ module Garden
       end.join
     end
 
+    ##
+    # We provide a set of utility functions to render nice looking text in
+    # the terminal or in the log output
     class << self
-      # Return a line of character
+      # Return a line of character with +char+
       def line(char: '-')
-        ' ' + char * (Logger.terminal_width - 2) + ' '
+        ' ' + char * (terminal_width - 2) + ' '
       end
 
       # Return terminal width
@@ -110,20 +113,22 @@ module Garden
         Rake.application.terminal_width
       end
 
-      # Crop a long string with an ellipsis
-      def truncate(str, length = 30, ellipsis = '...')
-        return str unless str.length > length
-        str[0..(length - ellipsis.length - 1)] + ellipsis
+      # Crop a long +string+ up to +length+ with an +ellipsis+
+      def truncate(string, length = 30, ellipsis = '...')
+        return string unless string.length > length
+        string[0..(length - ellipsis.length - 1)] + ellipsis
       end
 
-      # Render a time with max 6 char
+      # Render a +time+ with max 6 char
       def time(time)
+        hours = time / 3600
+        minutes = (time % 3600 / 60)
         if time < 10
           "#{time.round(3)}s"
         elsif time >= 3600
-          "#{(time / 3600).floor}h#{(time % 3600 / 60).floor.to_s.ljust(2, '0')}m"
+          "#{hours}h#{minutes.to_s.ljust(2, '0')}m"
         elsif time >= 60
-          "#{(time / 60).floor}m#{(time % 60).floor}s"
+          "#{minutes}m#{(time % 60)}s"
         else
           "#{time.round(2)}s"
         end
@@ -131,6 +136,9 @@ module Garden
 
       # Pad the text to provide a prefix with a number
       # useful to display list
+      # Where +number+ is the number of this element in a list
+      # where +nbdigits+ is the number of digits that we pad, default 3
+      # where +tablevel+ in the amount of space character that constitutes a tab
       def hierarchy(number, nbdigits: 3, tablevel: 4)
         levels = number.to_s.count('.')
         return "[#{number}] ".rjust nbdigits + tablevel if levels.zero?
