@@ -92,7 +92,7 @@ module Garden
 
     # Join all lines of text and ensures each one ends with \n
     def join(strings)
-      sep = $\ || "\n"
+      sep = $OUTPUT_FIELD_SEPARATOR || "\n"
       strings.map do |string|
         next if string.nil?
         string.end_with?(sep) ? string : string + sep
@@ -123,14 +123,11 @@ module Garden
       def time(time)
         hours = time / 3600
         minutes = (time % 3600 / 60)
-        if time < 10
-          "#{time.round(3)}s"
-        elsif time >= 3600
-          "#{hours}h#{minutes.to_s.ljust(2, '0')}m"
-        elsif time >= 60
-          "#{minutes}m#{(time % 60)}s"
-        else
-          "#{time.round(2)}s"
+        case time
+        when 0..9 then "#{time.round(3)}s"
+        when 10..59 then "#{time.round(2)}s"
+        when 60..3599 then "#{minutes}m#{(time % 60)}s"
+        else "#{hours}h#{minutes.to_s.ljust(2, '0')}m"
         end
       end
 
