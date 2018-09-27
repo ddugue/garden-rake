@@ -1,4 +1,3 @@
-
 + Test env parser
 + Test options
 
@@ -9,6 +8,8 @@
 + Split multiple filesets
 
 + Refactor chore
+  * Make clear CHORE is about log + file input/output
+  * Make clear COMMANDCHORE is about async management and command executions
 + Refactor chore_commands
 + Change all chore -> chore_
 + Refactor sh

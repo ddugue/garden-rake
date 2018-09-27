@@ -3,10 +3,9 @@
 ##
 # Module contains a single function +env+ to parse from ENV more intuitively
 module EnvParser
-
-  # Return a single value from ENV
+  # Returns a single value from ENV
   #
-  # Make sure the key is case-insensitive parse the data heuristically
+  # Make sure the key is case-insensitive, parse the data heuristically
   # * yes, y, true, on, True => true
   # * no, n, false, False => true
   # * numbers get converted to number

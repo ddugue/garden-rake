@@ -91,12 +91,8 @@ class FilesetGroup
     end
   end
 
-  def each
+  def each(&block)
     return enum_for(:each) unless block_given?
-    @filesets.each do |fs|
-      fs.each do |file|
-        yield file
-      end
-    end
+    @filesets.each { |fs| fs.each(&block) }
   end
 end

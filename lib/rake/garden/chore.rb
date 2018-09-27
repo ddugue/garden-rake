@@ -75,7 +75,7 @@ module Garden
     def invoke_with_call_chain(*args)
       @succeeded = true
       begin
-        super
+        super # TODO: Check supe
       rescue ParsingError => error
         @succeeded = false
         @logger.error(@logger.line(char: '*'))
