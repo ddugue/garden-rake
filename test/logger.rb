@@ -129,4 +129,127 @@ describe Garden::Logger do
 
   describe '.pad_for_hierarchy' do
   end
+
+  describe 'logging with the right level' do
+    before(:each) do
+      subject.level = level
+    end
+    context 'with error messages' do
+      let(:level) { subject.class::NONE }
+      it { is_expected.to have_attributes('debug?' => false) }
+      it { is_expected.to have_attributes('verbose?' => false) }
+      it { is_expected.to have_attributes('info?' => false) }
+      it { is_expected.to have_attributes('important?' => false) }
+
+      it 'should not log any message' do
+        expect { subject.debug('txt') && subject.flush }.not_to output.to_stdout
+      end
+
+      it 'should not log important message' do
+        expect { subject.important('txt') && subject.flush }.not_to output.to_stdout
+      end
+
+      it 'should not log verbose message' do
+        expect { subject.verbose('txt') && subject.flush }.not_to output.to_stdout
+      end
+
+      it 'should not log info message' do
+        expect { subject.info('txt') && subject.flush }.not_to output.to_stdout
+      end
+    end
+    context 'with debug messages' do
+      let(:level) { subject.class::DEBUG }
+      it { is_expected.to have_attributes('debug?' => true) }
+      it { is_expected.to have_attributes('verbose?' => true) }
+      it { is_expected.to have_attributes('info?' => true) }
+      it { is_expected.to have_attributes('important?' => true) }
+
+      it 'should not log debug message' do
+        expect { subject.debug('txt') && subject.flush }.to output.to_stdout
+      end
+
+      it 'should not log important message' do
+        expect { subject.important('txt') && subject.flush }.to output.to_stdout
+      end
+
+      it 'should not log verbose message' do
+        expect { subject.verbose('txt') && subject.flush }.to output.to_stdout
+      end
+
+      it 'should not log info message' do
+        expect { subject.info('txt') && subject.flush }.to output.to_stdout
+      end
+    end
+    context 'with verbose messages' do
+      let(:level) { subject.class::VERBOSE }
+      it { is_expected.to have_attributes('debug?' => false) }
+      it { is_expected.to have_attributes('verbose?' => true) }
+      it { is_expected.to have_attributes('info?' => true) }
+      it { is_expected.to have_attributes('important?' => true) }
+
+      it 'should not log debug message' do
+        expect { subject.debug('txt') && subject.flush }.not_to output.to_stdout
+      end
+
+      it 'should not log important message' do
+        expect { subject.important('txt') && subject.flush }.to output.to_stdout
+      end
+
+      it 'should not log verbose message' do
+        expect { subject.verbose('txt') && subject.flush }.to output.to_stdout
+      end
+
+      it 'should not log info message' do
+        expect { subject.info('txt') && subject.flush }.to output.to_stdout
+      end
+    end
+
+    context 'with informative messages' do
+      let(:level) { subject.class::INFO }
+      it { is_expected.to have_attributes('debug?' => false) }
+      it { is_expected.to have_attributes('verbose?' => false) }
+      it { is_expected.to have_attributes('info?' => true) }
+      it { is_expected.to have_attributes('important?' => true) }
+
+      it 'should not log debug message' do
+        expect { subject.debug('txt') && subject.flush }.not_to output.to_stdout
+      end
+
+      it 'should not log important message' do
+        expect { subject.important('txt') && subject.flush }.to output.to_stdout
+      end
+
+      it 'should not log verbose message' do
+        expect { subject.verbose('txt') && subject.flush }.not_to output.to_stdout
+      end
+
+      it 'should not log info message' do
+        expect { subject.info('txt') && subject.flush }.to output.to_stdout
+      end
+    end
+
+    context 'with important messages' do
+      let(:level) { subject.class::IMPORTANT }
+      it { is_expected.to have_attributes('debug?' => false) }
+      it { is_expected.to have_attributes('verbose?' => false) }
+      it { is_expected.to have_attributes('info?' => false) }
+      it { is_expected.to have_attributes('important?' => true) }
+
+      it 'should not log debug message' do
+        expect { subject.debug('txt') && subject.flush }.not_to output.to_stdout
+      end
+
+      it 'should not log important message' do
+        expect { subject.important('txt') && subject.flush }.to output.to_stdout
+      end
+
+      it 'should not log verbose message' do
+        expect { subject.verbose('txt') && subject.flush }.not_to output.to_stdout
+      end
+
+      it 'should not log info message' do
+        expect { subject.info('txt') && subject.flush }.not_to output.to_stdout
+      end
+    end
+  end
 end
