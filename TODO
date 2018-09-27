@@ -1,6 +1,4 @@
-+ Complete Logger class
 
-+ Test async object
 + Test env parser
 + Test options
 
@@ -19,23 +17,18 @@
 
 + Change command_context -> commands_dsl
 + Move strace to commands
-
++ Migrate commands
 
 
 
 ############
-+ Add Filepath class
-+ Add test
-
-+ Move strace and refactor
-
 + Add command mkdir, mv, ln, rm in the DSL
 + Make all relative command accept Args
 + Consolidate command arguments passing
 + Make set accept same syntax as cd
 + Make sync process all task that were before
-+ Make result from command work
-+ Move whitespace calculation to fn that accepts prefix
++ Make result from command work -> Test
+
 + Improve echo message
 + Add Frozen string literal everywhere
 + On task title replace _ with space

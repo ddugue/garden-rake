@@ -19,7 +19,7 @@ describe AsyncTester do
 
   context "when running" do
     before :each do
-      subject.start(0)
+      subject.start
     end
     it { is_expected.to have_attributes("running?" => true) }
     it { is_expected.to have_attributes("completed?" => false) }
@@ -29,7 +29,7 @@ describe AsyncTester do
 
   context "when complete" do
     before :each do
-      subject.start(0)
+      subject.start
       subject.update_status
     end
 
@@ -42,7 +42,7 @@ describe AsyncTester do
   context "when skipping" do
     before :each do
       subject.force_skip = true
-      subject.start(0)
+      subject.start
     end
 
     it { is_expected.to have_attributes("running?" => false) }
