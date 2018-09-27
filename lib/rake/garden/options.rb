@@ -30,6 +30,9 @@ module Garden
       begin
         @parser.parse @argv
       rescue OptionParser::InvalidOption
+        # We ignore invalid options as hte option might not have been
+        # added to our option parser yet. Unfortunately, it is not possible
+        # to not make +OptionParser+ raise error
       end
       self
     end

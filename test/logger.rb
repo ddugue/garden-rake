@@ -134,6 +134,7 @@ describe Garden::Logger do
     before(:each) do
       subject.level = level
     end
+
     context 'with error messages' do
       let(:level) { subject.class::NONE }
       it { is_expected.to have_attributes('debug?' => false) }
