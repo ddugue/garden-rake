@@ -34,6 +34,7 @@ describe Garden::EnvParser do
       it { is_expected.to eq(false) }
     end
   end
+
   context 'with number' do
       let(:key) { 'number' }
       it { is_expected.to eq(2) }
