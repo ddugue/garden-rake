@@ -25,11 +25,13 @@ describe Garden::EnvParser do
   context 'with booleans' do
     let(:key) { 'FAKE_DEBUG' }
     it { is_expected.to eq(true) }
-    describe "Fake_debug_1" do
+
+    describe "on truthy value" do
       let(:key) { 'fake_debug_1' }
       it { is_expected.to eq(true) }
     end
-    describe "Fake_debug_2" do
+
+    describe "on false value" do
       let(:key) { 'fake_debug_2' }
       it { is_expected.to eq(false) }
     end

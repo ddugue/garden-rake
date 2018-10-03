@@ -6,3 +6,4 @@ set -e
 rspec -f d test/logger.rb
 rspec -f d test/async.rb
 rspec -f d test/env.rb
+rspec -f d test/option.rb

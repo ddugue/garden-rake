@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'optparse'
+require 'ostruct'
 
 module Garden
   ##
@@ -13,13 +14,14 @@ module Garden
     def initialize(argv = ARGV)
       super()
       @argv = suffix_argv argv
+      @unparsable = []
       @parser = OptionParser.new
       parse
     end
 
     # Proxy for +OptionParser.on+, see +OptionParser+ documentation for usage
-    def on(*args, **kwargs, &block)
-      @parser.on(*args, **kwargs, &block)
+    def on(*args, &block)
+      @parser.on(*args, &block)
     end
 
     # Parse or reparse arguments from the cli.
@@ -27,12 +29,19 @@ module Garden
     # Some tasks can then defer option handling later in the execution process
     def parse
       return self if @argv.empty?
-      begin
-        @parser.parse @argv
-      rescue OptionParser::InvalidOption
-        # We ignore invalid options as hte option might not have been
-        # added to our option parser yet. Unfortunately, it is not possible
-        # to not make +OptionParser+ raise error
+      has_error = true
+      args = @argv + @unparsable
+      until args.empty? do
+        begin
+          @parser.parse! args
+        rescue OptionParser::InvalidOption => e
+          # We ignore invalid options as the option might not have been
+          # added to our option parser yet. Unfortunately, it is not possible
+          # to not make +OptionParser+ raise error
+          invalid = e.to_s.sub(/invalid option:\s+/, '')
+          @unparsable.push(invalid)
+          @unparsable.push(args[0]) unless args[0].nil? or args[0].start_with? '-'
+        end
       end
       self
     end
