@@ -157,7 +157,12 @@ describe Garden::Logger do
       it 'should not log info message' do
         expect { subject.info('txt') && subject.flush }.not_to output.to_stdout
       end
+
+      it 'should log error message' do
+        expect { subject.error('txt') && subject.flush }.to output.to_stderr
+      end
     end
+
     context 'with debug messages' do
       let(:level) { subject.class::DEBUG }
       it { is_expected.to have_attributes('debug?' => true) }
@@ -180,7 +185,12 @@ describe Garden::Logger do
       it 'should not log info message' do
         expect { subject.info('txt') && subject.flush }.to output.to_stdout
       end
+
+      it 'should log error message' do
+        expect { subject.error('txt') && subject.flush }.to output.to_stderr
+      end
     end
+
     context 'with verbose messages' do
       let(:level) { subject.class::VERBOSE }
       it { is_expected.to have_attributes('debug?' => false) }
@@ -202,6 +212,10 @@ describe Garden::Logger do
 
       it 'should not log info message' do
         expect { subject.info('txt') && subject.flush }.to output.to_stdout
+      end
+
+      it 'should log error message' do
+        expect { subject.error('txt') && subject.flush }.to output.to_stderr
       end
     end
 
@@ -227,6 +241,10 @@ describe Garden::Logger do
       it 'should not log info message' do
         expect { subject.info('txt') && subject.flush }.to output.to_stdout
       end
+
+      it 'should log error message' do
+        expect { subject.error('txt') && subject.flush }.to output.to_stderr
+      end
     end
 
     context 'with important messages' do
@@ -250,6 +268,10 @@ describe Garden::Logger do
 
       it 'should not log info message' do
         expect { subject.info('txt') && subject.flush }.not_to output.to_stdout
+      end
+
+      it 'should log error message' do
+        expect { subject.error('txt') && subject.flush }.to output.to_stderr
       end
     end
   end
