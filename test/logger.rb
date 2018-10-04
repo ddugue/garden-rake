@@ -128,6 +128,15 @@ describe Garden::Logger do
   end
 
   describe '.pad_for_hierarchy' do
+    subject { Garden::Logger.pad_for_hierarchy(level, 'txt') }
+    context 'with level 0' do
+      let(:level) { 0 }
+      it { is_expected.to eql('       txt') }
+    end
+    context 'with level 1' do
+      let(:level) { 1.1 }
+      it { is_expected.to eql('           txt') }
+    end
   end
 
   describe 'logging with the right level' do
