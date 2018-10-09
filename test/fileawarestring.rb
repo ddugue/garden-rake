@@ -2,45 +2,80 @@ require 'rake/garden/fileawarestring'
 
 RSpec.describe Garden::FileAwareString, "#format" do
   subject { Garden::FileAwareString.new(nil, '/home/test.txt', selector).to_s }
-  describe "with %f" do
+  describe "with %f (filename)" do
     let(:selector) { '%f' }
     it { is_expected.to eql('test.txt') }
   end
 
-  context 'with root' do
+  describe "with %F (filename without directory)" do
+    let(:selector) { '%f' }
+    it { is_expected.to eql('test.txt') }
+  end
 
+  describe "with %b (filename without extension)" do
+    let(:selector) { '%b' }
+    it { is_expected.to eql('test') }
+  end
+
+  describe "with %B (filename without directory and extension)" do
+    let(:selector) { '%B' }
+    it { is_expected.to eql('test') }
+  end
+
+  describe "with %d (directory)" do
+    let(:selector) { '%d' }
+    it { is_expected.to eql('/home/') }
+  end
+
+  describe "with %D (full directory)" do
+    let(:selector) { '%D' }
+    it { is_expected.to eql('/home') }
+  end
+
+  describe "with %p (fullfilename)" do
+    let(:selector) { '%p' }
+    it { is_expected.to eql('/home/test.txt') }
+  end
+
+  context 'with root' do
+    subject { Garden::FileAwareString.new("/home/", '/home/sub/test.txt', selector).to_s }
+
+    describe "with %f" do
+      let(:selector) { '%f' }
+      it { is_expected.to eql('sub/test.txt') }
+    end
+
+    describe "with %F (filename without directory)" do
+      let(:selector) { '%F' }
+      it { is_expected.to eql('test.txt') }
+    end
+
+    describe "with %b (filename without extension)" do
+      let(:selector) { '%b' }
+      it { is_expected.to eql('sub/test') }
+    end
+
+    describe "with %b (filename without directory and extension)" do
+      let(:selector) { '%B' }
+      it { is_expected.to eql('test') }
+    end
+
+    describe "with %d (directory)" do
+      let(:selector) { '%d' }
+      it { is_expected.to eql('sub/') }
+    end
+
+    describe "with %D (full directory)" do
+      let(:selector) { '%D' }
+      it { is_expected.to eql('/home/sub') }
+    end
+
+    describe "with %p (fullfilename)" do
+      let(:selector) { '%p' }
+      it { is_expected.to eql('/home/sub/test.txt') }
+    end
   end
 end
-
-
-
-#   it "should replace %f with filename + root" do
-#     expect(FileAwareString.new(nil, "/home/test.txt", "%f").to_s)\
-#       .to eq("test.txt")
-#     expect(FileAwareString.new("/home/", "/home/sub/test.txt", "%f").to_s)\
-#       .to eq("sub/test.txt")
-#   end
-
-#   it "should replace %F with only the filename" do
-#     expect(FileAwareString.new(nil, "/home/test.txt", "%F").to_s)\
-#       .to eq("test.txt")
-#     expect(FileAwareString.new("/home/", "/home/sub/test.txt", "%F").to_s)\
-#       .to eq("test.txt")
-#   end
-
-#   it "should replace %b with the filename without extension" do
-#     expect(FileAwareString.new(nil, "/home/test.txt", "%b").to_s)\
-#       .to eq("test")
-#     expect(FileAwareString.new("/home/", "/home/sub/test.txt", "%b").to_s)\
-#       .to eq("sub/test")
-#   end
-
-#   it "should replace %B with only the filename without extension" do
-#     expect(FileAwareString.new(nil, "/home/test.txt", "%B").to_s)\
-#       .to eq("test")
-#     expect(FileAwareString.new("/home/", "/home/sub/test.txt", "%B").to_s)\
-#       .to eq("test")
-#   end
 
 #   it "should replace %x with the extension of the file" do
 #     expect(FileAwareString.new(nil, "/home/test.txt", "%x").to_s)\
@@ -51,26 +86,6 @@ end
 #       .to eq("")
 #   end
 
-#   it "should replace %d with the directory of the file" do
-#     expect(FileAwareString.new(nil, "/home/test.txt", "%d").to_s)\
-#       .to eq("/home/")
-#     expect(FileAwareString.new("/home/", "/home/sub/test.txt", "%d").to_s)\
-#       .to eq("sub/")
-#   end
-
-#   it "should replace %D with the full directory of the file" do
-#     expect(FileAwareString.new(nil, "/home/test.txt", "%D").to_s)\
-#       .to eq("/home")
-#     expect(FileAwareString.new("/home/", "/home/sub/test.txt", "%D").to_s)\
-#       .to eq("/home/sub")
-#   end
-
-#   it "should replace %p with the full filename" do
-#     expect(FileAwareString.new(nil, "/home/test.txt", "%p").to_s)\
-#       .to eq("/home/test.txt")
-#     expect(FileAwareString.new("/home/", "/home/sub/test.txt", "%p").to_s)\
-#       .to eq("/home/sub/test.txt")
-#   end
 # end
 
 # RSpec.describe FileAwareString, "#creation" do
