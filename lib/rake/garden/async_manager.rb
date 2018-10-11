@@ -9,10 +9,13 @@ module AsyncManager
     []
   end
 
+  # Start the execution of all the sub processes
   def process
     asyncs.each_with_index { |item, index| item.start(index) }
   end
 
+  # Wait for all (if +id+ == :all) async process to complete or a specific one
+  # whose prcocess id is +id+ if +id+ is not equal to :all
   def wait_for(id = :all)
     until @completed
       @completed = true
@@ -40,10 +43,12 @@ module AsyncManager
     @skips ||= asyncs.count(&:skip?) || 0
   end
 
+  # Return the number of async blocks that suceeded
   def successes
     @successes ||= asyncs.count(&:succeeded?) || 0
   end
 
+  # Return wether all the async blocks succeeded
   def succeeded?
     @succeeded = asyncs.none?(&:error?) if @succeeded.nil?
     @succeeded

@@ -72,6 +72,9 @@ module Garden
       attr_accessor :file
       attr_accessor :directory_root
 
+      # Set the global propriety +file+
+      # Also Set the global propriety  +directory_root+ if non nil
+      # Set the previous values once the block is executed
       def with_file(file, directory_root = nil)
         if directory_root
           previous_root = self.directory_root
@@ -84,8 +87,9 @@ module Garden
         self.directory_root = previous_root if previous_root
       end
 
-      def with_folder(folder, &block)
-        with_file(nil, folder, &block)
+      # Set the global propriety +directory_root+ for the block
+      def with_folder(directory_root, &block)
+        with_file(nil, directory_root, &block)
       end
 
       ##
