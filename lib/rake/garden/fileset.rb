@@ -1,98 +1,91 @@
-require 'rake/garden/filepath'
+# frozen_string_literal: true
 
-class Fileset
-  include Enumerable
+require 'rake/garden/fileawarestring'
 
-  def initialize(*args)
-    @files = []
-    @pending = true
-    @folder_root = nil
-  end
+module Garden
+  class Fileset
+    include Enumerable
 
-  def resolve
-    @pending = false
-  end
+    attr_reader :directory_root
 
-  def <<(file)
-    if file.is_a? Array
-      @files = file
-    else
-      @files << file
-    end
-  end
-
-  def each
-    return enum_for(:each) unless block_given?
-
-    resolve if @pending
-
-    previous_root = FileAwareString.folder_root
-    previous_file = FileAwareString.file
-
-    FileAwareString.folder_root = @folder_root
-    @files.each do |file|
-      FileAwareString.file = file
-      yield file
+    def initialize(*)
+      @files = []
+      @pending = true
+      @directory_root = nil
     end
 
-    FileAwareString.folder_root = previous_root
-    FileAwareString.file = previous_file
-  end
-end
+    def resolve
+      @pending = false
+    end
 
-class GlobFileset < Fileset
-  GLOB = Regexp.new(/^[^\*]*/)
-
-  def initialize(glob)
-    super
-    @glob = glob.to_s
-    @folder_root ||= (GLOB.match(@glob)[0] || '').to_s
-  end
-
-  def resolve
-    super
-    @files = (Dir.glob @glob).sort
-  end
-
-  def self.is_glob(path)
-    path.include? "*"
-  end
-end
-
-class FilesetGroup
-  include Enumerable
-
-  def append_fileset(fileset)
-    if fileset.is_a? Fileset
-      @filesets.unshift fileset
-    elsif fileset.is_a? String
-      str = FileAwareString.create(fileset)
-
-      if GlobFileset.is_glob(str)
-        @filesets.unshift GlobFileset.new(str)
+    def <<(file)
+      if file.is_a? Array
+        @files = file
       else
-        @orphans.unshift(str)
+        @files << file
       end
-    elsif fileset.is_a? Enumerable
-      fileset.each { |fs| append_fileset(fs) }
+    end
+
+    def each
+      return enum_for(:each) unless block_given?
+
+      resolve if @pending
+
+      FileAwareString.with_folder @directory_root do
+        @files.each do |file|
+          FileAwareString.with_file file do
+            yield file
+          end
+        end
+      end
     end
   end
 
-  def initialize(*args)
-    @filesets = []
-    @orphans = []
+  # Represent a fileset that is built with a Glob
+  class GlobFileset < Fileset
+    GLOB = Regexp.new(/^[^\*]*/)
 
-    append_fileset(args)
+    def initialize(glob)
+      super
+      @glob = glob.to_s
+      @directory_root ||= (GLOB.match(@glob)[0] || '').to_s
+    end
 
-    unless @orphans.empty?
-      fs = Fileset.new
-      fs << @orphans
-      @filesets.unshift(fs)
+    def resolve
+      super
+      @files = (Dir.glob @glob).sort
     end
   end
 
-  def each(&block)
-    return enum_for(:each) unless block_given?
-    @filesets.each { |fs| fs.each(&block) }
+  # Represent a 'set of set'
+  class FilesetGroup
+    include Enumerable
+    def initialize(*args)
+      @filesets = []
+      @orphans = Fileset.new
+
+      append_fileset(args)
+    end
+
+    def append_fileset(fileset)
+      if fileset.is_a? Fileset
+        @filesets.unshift fileset
+      elsif fileset.is_a? String
+        str = FileAwareString.create(fileset)
+        if str.glob?
+          @filesets.unshift GlobFileset.new(str)
+        else
+          @orphans << str
+        end
+      elsif fileset.is_a? Enumerable
+        fileset.each { |fs| append_fileset(fs) }
+      end
+    end
+
+    def each(&block)
+      return enum_for(:each) unless block_given?
+      @filesets.each { |fs| fs.each(&block) }
+      @orphans.each(&block)
+    end
   end
 end
