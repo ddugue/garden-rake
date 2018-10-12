@@ -1,10 +1,11 @@
 
-+ Test for fileawarestring
-+ Refactor test files
++ Test metadata
++ Test async manager
++ Add a file input output module
 
++ Split multiple filesets
 + Make everything inside Garden module
 + Split Async Manager and async
-+ Split multiple filesets
 
 + Refactor chore
   * Make clear CHORE is about log + file input/output
