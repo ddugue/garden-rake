@@ -20,7 +20,7 @@ end
 
 ##
 # Abstract object used to parse function arguments.
-# Allow a form of overriding to provide different syntax for function calling.
+# Allow a kind of overriding to provide different syntax for function calling.
 class CommandArgs
   attr_reader :args
   attr_reader :kwargs

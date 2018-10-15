@@ -1,43 +1,58 @@
 # frozen_string_literal: true
 
 require 'rake/garden/fileawarestring'
+require 'rake/garden/filepath'
+require 'rake/garden/context'
 
 module Garden
   class Fileset
     include Enumerable
+    include Dependable
 
-    attr_reader :directory_root
-
-    def initialize(*)
-      @files = []
-      @pending = true
-      @directory_root = nil
-    end
-
-    def resolve
-      @pending = false
+    def initialize(files = [])
+      @files = files
     end
 
     def <<(file)
-      if file.is_a? Array
-        @files = file
+      if file.is_a? String
+        @files << Filepath.new(file)
       else
         @files << file
       end
     end
 
-    def each
+    def each(&block)
       return enum_for(:each) unless block_given?
+      @files.each &block
+    end
 
-      resolve if @pending
+    class << self
+      GLOB = Regexp.new(/^[^\*]*/)
 
-      FileAwareString.with_folder @directory_root do
-        @files.each do |file|
-          FileAwareString.with_file file do
-            yield file
+      # Create a fileset from a glob
+      def from_glob(glob)
+        fileset = self.new
+        directory_root = (GLOB.match(@glob)[0] || '').to_s
+        Context.instance.with_variable :directory_root, directory_root do
+          (Dir.glob glob).sort do |path|
+            fileset << path
           end
         end
       end
+    end
+  end
+
+  module Filepipe
+
+    def input_files
+    end
+
+    def output_files
+    end
+
+    ##
+    # Return all inputfiles
+    def all
     end
   end
 
