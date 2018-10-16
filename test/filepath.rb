@@ -9,6 +9,10 @@ RSpec.describe Garden::Filepath do
       %x( touch /tmp/filetest/a.txt )
     end
 
+    after(:each) do
+      %x( rm -fr /tmp/filetest )
+    end
+
     subject { Garden::Filepath.new('/tmp/filetest/a.txt') }
 
     it "should yield self" do

@@ -43,8 +43,13 @@ module Garden
 
     ##
     # Return files that have been modified since a specific date
-    def since
+    def since(date = nil, &block)
+      since_date = date || @default_since
+      fs = Fileset.new(select { |f| f.mtime > since_date })
+      fs.each(&block) if block_given?
+      fs
     end
+    alias :changed :since
 
     class << self
       GLOB = Regexp.new(/^[^\*]*/)

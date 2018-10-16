@@ -1,4 +1,5 @@
 require 'rake/garden/fileset'
+require 'rake/garden/context'
 require 'rake/garden/fileawarestring'
 
 RSpec.describe Garden::Fileset do
@@ -27,6 +28,44 @@ RSpec.describe Garden::Fileset do
         expect(f).to eq("test.txt")
       end
     end
+  end
+
+  context "with date filtering" do
+    it "should set default since date to the lowest possible date by default" do
+      fs = Garden::Fileset.new
+      expect(fs.instance_variable_get(:@default_since)).to be < Time.at(0)
+    end
+
+    it "should be set to global variable when set up" do
+      Garden::Context.instance.with_value :default_since, Time.at(1337) do
+        fs = Garden::Fileset.new
+        expect(fs.instance_variable_get(:@default_since)).to eq(Time.at(1337))
+      end
+    end
+
+    it "should be overridable" do
+      Garden::Context.instance.with_value :default_since, Time.at(1337) do
+        fs = Garden::Fileset.new([], Time.at(1338))
+        expect(fs.instance_variable_get(:@default_since)).to eq(Time.at(1338))
+      end
+    end
+
+    it "should filter date" do
+      %x( rm /tmp/datetest )
+      %x( mkdir /tmp/datetest )
+      %x( touch /tmp/datetest/a.txt )
+      sleep 0.1
+      fs = Garden::Fileset.new(
+        [
+          Garden::Filepath.new("/tmp/datetest/a.txt"),
+          Garden::Filepath.new("/tmp/datetest/b.txt")
+        ], Time.now)
+      sleep 0.1
+      %x( touch /tmp/datetest/b.txt )
+      expect(fs.since.to_a).to eq(["/tmp/datetest/b.txt"])
+      expect(fs.changed.to_a).to eq(["/tmp/datetest/b.txt"])
+    end
+
   end
 
   context "with globs" do
