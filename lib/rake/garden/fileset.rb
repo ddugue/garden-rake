@@ -6,13 +6,13 @@ require 'rake/garden/context'
 require 'rake/early_time'
 
 module Garden
+  # Represent a collection of +Fileset+ and files
   class Fileset
     include Enumerable
     include Dependable
 
-    def initialize(files = [], default_since = nil)
+    def initialize(files = [])
       @files = files
-      @default_since = default_since || Context.instance.default_since || Rake::EARLY
     end
 
     def <<(file)
@@ -28,7 +28,7 @@ module Garden
     # fileset
     def each(&block)
       return enum_for(:each) unless block_given?
-      @files.each &block
+      @files.each { |f| f.each(&block) }
     end
 
     ##
@@ -44,7 +44,7 @@ module Garden
     ##
     # Return files that have been modified since a specific date
     def since(date = nil, &block)
-      since_date = date || @default_since
+      since_date = date || Context.instance.default_since || Rake::EARLY
       fs = Fileset.new(select { |f| f.mtime > since_date })
       fs.each(&block) if block_given?
       fs
