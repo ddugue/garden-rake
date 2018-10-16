@@ -16,11 +16,7 @@ module Garden
     end
 
     def <<(file)
-      if file.is_a? String
-        @files << Filepath.new(file)
-      else
-        @files << file
-      end
+      @files << (file.is_a?(String) ? Filepath.new(file) : file)
     end
 
     ##
@@ -49,14 +45,14 @@ module Garden
       fs.each(&block) if block_given?
       fs
     end
-    alias :changed :since
+    alias changed since
 
     class << self
       GLOB = Regexp.new(/^[^\*]*/)
 
       # Create a fileset from a glob
       def from_glob(glob)
-        fileset = self.new
+        fileset = new
         directory_root = (GLOB.match(glob)[0] || '').to_s
         Context.instance.with_value :directory_root, directory_root do
           (Dir.glob glob).sort.each do |path|
