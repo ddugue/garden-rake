@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require 'rake/garden/dependable'
 require 'rake/garden/context'
 
 # Extending String to add a - method
@@ -17,7 +16,6 @@ end
 module Garden
   # Class that represent a filepath
   class Filepath
-    # include Dependable
 
     attr_reader :path
     attr_reader :directory_root

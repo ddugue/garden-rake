@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require 'rake/garden/fileawarestring'
 require 'rake/garden/filepath'
 require 'rake/garden/context'
 require 'rake/early_time'
@@ -9,7 +8,6 @@ module Garden
   # Represent a collection of +Fileset+ and files
   class Fileset
     include Enumerable
-    include Dependable
 
     def initialize(files = [])
       @files = files
@@ -79,53 +77,5 @@ module Garden
   #   def all_input_filse
   #   end
   # alias all
-  # end
-
-  # Represent a fileset that is built with a Glob
-  # class GlobFileset < Fileset
-  #   GLOB = Regexp.new(/^[^\*]*/)
-
-  #   def initialize(glob)
-  #     super
-  #     @glob = glob.to_s
-  #     @directory_root ||= (GLOB.match(@glob)[0] || '').to_s
-  #   end
-
-  #   def resolve
-  #     super
-  #     @files = (Dir.glob @glob).sort
-  #   end
-  # end
-
-  # # Represent a 'set of set'
-  # class FilesetGroup
-  #   include Enumerable
-  #   def initialize(*args)
-  #     @filesets = []
-  #     @orphans = Fileset.new
-
-  #     append_fileset(args)
-  #   end
-
-  #   def append_fileset(fileset)
-  #     if fileset.is_a? Fileset
-  #       @filesets.unshift fileset
-  #     elsif fileset.is_a? String
-  #       str = FileAwareString.create(fileset)
-  #       if str.glob?
-  #         @filesets.unshift GlobFileset.new(str)
-  #       else
-  #         @orphans << str
-  #       end
-  #     elsif fileset.is_a? Enumerable
-  #       fileset.each { |fs| append_fileset(fs) }
-  #     end
-  #   end
-
-  #   def each(&block)
-  #     return enum_for(:each) unless block_given?
-  #     @filesets.each { |fs| fs.each(&block) }
-  #     @orphans.each(&block)
-  #   end
   # end
 end
