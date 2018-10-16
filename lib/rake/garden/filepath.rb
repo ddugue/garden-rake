@@ -16,7 +16,6 @@ end
 module Garden
   # Class that represent a filepath
   class Filepath
-
     attr_reader :path
     attr_reader :directory_root
 

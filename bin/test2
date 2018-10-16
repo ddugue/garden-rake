@@ -5,6 +5,5 @@ rspec -f d test/logger.rb
 rspec -f d test/async.rb
 rspec -f d test/env_parser.rb
 rspec -f d test/options.rb
-rspec -f d test/fileawarestring.rb
 rspec -f d test/fileset.rb
 rspec -f d test/filepath.rb
