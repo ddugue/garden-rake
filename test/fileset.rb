@@ -1,6 +1,5 @@
 require 'rake/garden/fileset'
 require 'rake/garden/context'
-require 'rake/garden/fileawarestring'
 
 RSpec.describe Garden::Fileset do
   # subject { Garden::Fileset.new() }
