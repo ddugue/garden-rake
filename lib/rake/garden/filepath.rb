@@ -44,12 +44,18 @@ module Garden
 
     # Represent the relative path of the directory
     def relative_directory
+      return '' unless @directory_root
       @path - @directory_root - name
     end
 
     # Directory of the path
     def directory
-      File.dirname(@path)
+      File.dirname(@path) + '/'
+    end
+
+    # Return the date of modification of the file if it exist
+    def mtime
+      File.exist?(@path) ? File.mtime(@path) : nil
     end
 
     # Return a global context object to extract global state

@@ -3,20 +3,54 @@ require 'rake/garden/fileawarestring'
 
 RSpec.describe Garden::Fileset do
   # subject { Garden::Fileset.new() }
-  before(:each) do
-    subject << 'test.txt'
-  end
 
-  it "should be transparent to a simple list" do
-    subject << "a.txt"
-    expect(subject.each.to_a).to eq(["test.txt", "a.txt"])
-  end
+  context "with simple list" do
+    before(:each) do
+      subject << 'test.txt'
+    end
+    it "should be transparent to a simple list" do
+      subject << "a.txt"
+      expect(subject.each.to_a).to eq(["test.txt", "a.txt"])
+    end
 
-  it "should be able to iterate over simply" do
-    subject.each do |f|
-      expect(f).to eq("test.txt")
+    it "should be able to iterate over simply" do
+      subject.each do |f|
+        expect(f).to eq("test.txt")
+      end
+    end
+
+    it "should be able to filter the fileset by extension" do
+      subject << "a.rb"
+      expect(subject.ext('txt').to_a).to eq(["test.txt"])
+      expect(subject.ext('.txt').to_a).to eq(["test.txt"])
+      subject.ext('.txt') do |f|
+        expect(f).to eq("test.txt")
+      end
     end
   end
+
+  context "with globs" do
+
+    before(:each) do
+      %x( mkdir /tmp/globtest )
+      %x( mkdir /tmp/globtest/prefix )
+      %x( touch /tmp/globtest/prefix/a.txt )
+    end
+
+    let(:glob) { "/tmp/globtest/prefix/*.txt" }
+
+    subject { Garden::Fileset.from_glob(glob).to_a }
+
+    after(:each) do
+      %x( rm -fr /tmp/globtest )
+    end
+
+    it { is_expected.to eq(['/tmp/globtest/prefix/a.txt']) }
+    it "should set right directory root" do
+      expect(subject[0].directory_root).to eq("/tmp/globtest/prefix/")
+    end
+  end
+
 end
 
 # RSpec.describe Garden::GlobFileset do
