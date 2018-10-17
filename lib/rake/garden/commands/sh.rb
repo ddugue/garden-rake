@@ -1,9 +1,9 @@
 require 'open3'
 require 'time'
 
-require 'rake/garden/ext/file'
+# require 'rake/garden/ext/file'
 require 'rake/garden/filepath'
-require 'rake/garden/fileset2'
+require 'rake/garden/fileset'
 
 require 'rake/garden/command'
 require 'rake/garden/command_args'
@@ -25,6 +25,7 @@ module Garden
       Where 'input_files' and 'output_files' are file patterns:
       #{CommandArgs::FILE_PATTERNS}
     SYNTAX
+    CMD_NOT_STRING = "The command must be a string"
 
     def validate
       raise ParsingError.new(self) if (length == 0 or length > 3)
@@ -33,23 +34,21 @@ module Garden
     ##
     # Return a fileset group for input files
     def input
-      FilesetGroup.new(length >= 2 ? get(0) : nil)
+      return format_file(get(0)) if length >= 2
     end
 
     ##
     # Return a fileset group for output files
     def output
-      FilesetGroup.new(length >= 3 ? get(-1) : nil)
+      return format_file(get(-1)) if length >= 3
     end
 
     ##
     # Return a file aware string for the command
     def command
       str = length == 1 ? get(0) : get(1)
-      unless (str.is_a?(String) || str.is_a?(FileAwareString))
-        raise ParsingError.new(self, "The command must be a string")
-      end
-      FileAwareString.create(str)
+      raise ParsingError.new(self, CMD_NOT_STRING) unless str.is_a?(String)
+      format_file(str)
     end
   end
 
@@ -86,6 +85,7 @@ module Garden
     ##
     # Return output files based on the provided output files
     def output_files
+      Fileset.new(@output.map { |f| Filepath.new(f) })
       @skip ? nil : @output
     end
 

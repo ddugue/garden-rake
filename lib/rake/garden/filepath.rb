@@ -93,6 +93,7 @@ module Garden
     # %D - Replace with full directory path
     # %p - Replace with full path
     def format(string)
+      return nil if string.nil?
       string.gsub(/%[bBfFpxdD]/) do |s|
         case s
         when '%f' then relative_directory + name

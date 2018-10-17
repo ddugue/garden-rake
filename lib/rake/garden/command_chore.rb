@@ -5,7 +5,8 @@ require 'rake/garden/command_dsl'
 
 module Garden
   ##
-  # Chore that is meant to contain +Command+
+  # Chore that is meant to contain +Command+ and is responsible for
+  # their execution
   class CommandChore < Chore
     include CommandsContext
     include AsyncManager

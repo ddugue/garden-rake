@@ -1,4 +1,3 @@
-# rspec -f d test/args.rb
 # rspec -f d test/sh.rb
 set -e
 rspec -f d test/logger.rb
@@ -9,3 +8,5 @@ rspec -f d test/fileset.rb
 rspec -f d test/filepath.rb
 rspec -f d test/metadata.rb
 rspec -f d test/chore.rb
+rspec -f d test/args.rb
+rspec -f d test/command.rb

@@ -144,14 +144,21 @@ module Garden
     end
 
     ##
-    # Override
-    # Return wether the task need to be override
+    # Return wether the task need to be run
+    # We run it only if prerequisites are empty or when one of its input
+    # has been modified since last execution
     def needed?
       if @needed.nil?
         @needed = @force || \
                   prerequisite_tasks.empty? || \
-                  input_files.since(@last_executed).any? ||
-                  File.mtime(@application.rakefile) > @last_executed
+                  input_files.since(@last_executed).any?
+
+        # We also make sure that if the rakefile was modified since last
+        # execution, we force reexecution
+        if @application.rakefile
+          @needed ||= File.mtime(@application.rakefile) > @last_executed
+        end
+
       end
       @needed
     end
