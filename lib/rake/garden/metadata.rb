@@ -1,3 +1,6 @@
+# frozen_string_literal: true
+
+require 'forwardable'
 require 'json'
 
 module Garden
@@ -5,6 +8,8 @@ module Garden
   # Recursive datastructure to fetch data from a metadata file
   ##
   class TreeDict
+    extend Forwardable
+
     def initialize(data = nil, parent = nil)
       @data = data || {}
       @parent = parent
@@ -33,38 +38,17 @@ module Garden
     end
 
     def save
-      @parent.save if @parent
+      @parent&.save
     end
 
-    ##
-    # Override of the default methods to access data
-    def [](ind)
-      @data[ind]
-    end
-
-    def clear
-      @data.clear
-    end
-
-    def []=(ind, value)
-      @data[ind] = value
-    end
-
-    def key?(key)
-      @data.key? key
-    end
-
-    def fetch(value, default)
-      @data.fetch(value, default)
-    end
-
-    def each(*args, &block)
-      @data.each(*args, &block)
-    end
-
-    def to_s
-      @data.to_s
-    end
+    # We delegate a few method directly to data
+    def_delegators :@data, :[]
+    def_delegators :@data, :clear
+    def_delegators :@data, :[]=
+    def_delegators :@data, :key?
+    def_delegators :@data, :fetch
+    def_delegators :@data, :each
+    def_delegators :@data, :to_s
   end
 
   ##

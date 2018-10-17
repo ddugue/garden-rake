@@ -7,3 +7,4 @@ rspec -f d test/env_parser.rb
 rspec -f d test/options.rb
 rspec -f d test/fileset.rb
 rspec -f d test/filepath.rb
+rspec -f d test/metadata.rb
