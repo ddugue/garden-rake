@@ -61,21 +61,4 @@ module Garden
       end
     end
   end
-
-  # module Filepipe
-
-  #   def input_files
-
-  #   end
-  # alias files
-
-  #   def output_files
-  #   end
-
-  #   ##
-  #   # Return all inputfiles
-  #   def all_input_filse
-  #   end
-  # alias all
-  # end
 end
