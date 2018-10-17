@@ -106,5 +106,16 @@ module Garden
         end
       end
     end
+
+    class << self
+      # Return wether the string might be a filepath or a glob
+      def is_file?(string)
+        return true if string.instance_of? Filepath
+        return false unless string.instance_of? String
+        (string.include? '.')\
+        || (string.include? '/') \
+        || (string.include? '*')
+      end
+    end
   end
 end

@@ -29,6 +29,7 @@ module AsyncManager
     end
   end
 
+  # Alias for wait_for all
   def result
     wait_for :all
   end

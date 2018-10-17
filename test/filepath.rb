@@ -31,6 +31,26 @@ RSpec.describe Garden::Filepath do
     end
   end
 
+  context "is file?" do
+    subject { Garden::Filepath.is_file? file }
+    describe "with *" do
+      let(:file) { '*' }
+      it { is_expected.to be(true) }
+    end
+    describe "with ext" do
+      let(:file) { 'test.txt' }
+      it { is_expected.to be(true) }
+    end
+    describe "with folder" do
+      let(:file) { 'dav/test' }
+      it { is_expected.to be(true) }
+    end
+    describe "not a file" do
+      let(:file) { 'dav' }
+      it { is_expected.to be(false) }
+    end
+  end
+
   context "with format" do
     subject { Garden::Filepath.new('/home/test.txt').format(selector) }
 

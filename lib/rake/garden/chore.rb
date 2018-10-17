@@ -1,17 +1,25 @@
+# frozen_string_literal: true
+
+require 'rake'
+require 'rake/task'
+require 'rake/application'
+
 require 'rake/garden/logger'
+require 'rake/garden/metadata'
 require 'rake/garden/fileset'
+require 'rake/garden/filepath'
+require 'rake/garden/noop'
 
 module Garden
   ##
-  # A chore is a task you do not want to execute or the execute it as needed
-  # It tries to evaluate wether it should be executed or net
+  # A chore is a task you do not want to execute or to execute it as needed
+  # It tries to evaluate wether it should be executed or not
   class Chore < Rake::Task
     attr_reader :last_executed
-    attr_reader :output_files
     attr_accessor :options
 
     def initialize(task_name, app)
-      @metadata = metadata.namespace(task_name)
+      @metadata = $metadata.namespace(task_name)
       @last_executed = Time.at(@metadata.fetch('last_executed', 0) || 0)
       @logger = Logger.new(level: $LOGLEVEL || Logger::INFO)
       @force = false # Wether to force the task to execute
@@ -21,36 +29,60 @@ module Garden
     ##
     # Represent the printable version of this task name
     def title
-      name.capitalize.bold
+      name.capitalize.bold.sub('_', ' ')
     end
 
     ##
-    # Return the set of all prequisite files
-    ##
-    def files(dir = nil)
-      # If dir is provided we return a new file set
-      return FileSet.new(dir) unless dir.nil?
+    # Represent the outputed files generated or modified by this chore
+    def output_files
+      @output_files ||= Fileset.new
+    end
 
-      # In default case we return a set of output files of all dependant class
-      @files ||=
-        begin
-          files = FileSet.new
-          prerequisite_tasks.select { |t| t.is_a? Chore }.each do |t|
-            files.anchor(t.output_files)
-          end
-          files
-        end
+    ##
+    # Iterate over output_files
+    def each(&block)
+      return enum_for(:each) unless block_given?
+      output_files.each { |f| f.each(&block) }
+    end
+
+    ##
+    # Return the files needed to execute this chore
+    def input_files
+      @input_files ||=
+        Fileset.new(prerequisite_tasks.select { |t| t.is_a? Chore })
+    end
+
+    ##
+    # Return a fileset
+    # If +dir+ is non nil, return a glob based fileset
+    # In any other case return input_files
+    def files(dir = nil)
+      return Fileset.from_glob(dir) unless dir.nil?
+      input_files
+    end
+
+    def lookup_prerequisite(prerequisite_name) # :nodoc:
+      if [true, 'true'].include? prerequisite_name
+        # If true, it is simply an hack to make the chore always execute
+        # even when it has dependencies
+
+        @force = true
+        Noop.new @application
+      elsif Filepath.is_file? prerequisite_name
+        # We convert filepath into FileChores
+        require 'rake/garden/file_chore' unless FileChore
+
+        FileChore.new(prerequisite_name, @application)
+      else
+        super prerequisite_name.to_s
+      end
     end
 
     ##
     # Override execute to decorate the contex with self instance method
     def execute(args = nil)
       args ||= EMPTY_TASK_ARGS
-      if application.options.dryrun
-        application.trace "** Execute (dry run) #{name}"
-        return
-      end
-      application.trace "** Execute #{name}" if application.options.trace
+      return if application.options.dryrun
       application.enhance_with_matching_rule(name) if @actions.empty?
 
       # Instance exec decorate the context of the lambda with self methods
@@ -66,53 +98,66 @@ module Garden
     end
 
     ##
-    # Return wether a single file changed in regard to this task
-    ##
-    def changed?(file)
-      File.mtime(file) > @last_executed
-    end
-
-    def invoke_with_call_chain(*args)
-      @succeeded = true
-      begin
-        super # TODO: Check supe
-      rescue ParsingError => error
-        @succeeded = false
-        @logger.error(@logger.line(char: '*'))
-        error.log(@logger)
+    # Log some content before the execution
+    def pre_log
+      @logger.info ' '
+      if application.options.dryrun
+        @logger.important " Running Task (dry run): #{title} "
+      else
+        @logger.important " Running Task: #{title} "
       end
-      @logger.flush
-      @metadata['last_executed'] = Time.now.to_i if @succeeded && needed?
-      exit(1) unless @succeeded
     end
 
     ##
-    # Print debugging information for when a task is skipped.
-    # Might help avoid some tasks not triggering when they should
-    def _debug_skip
+    # Log some content after the execution
+    def post_log
+      return if needed?
       @logger.debug(" Task was last executed #{@last_executed}")
       @logger.debug do
-        info = prerequisite_tasks.map(&:output_files) \
-                                 .reduce(:+) \
-                                 .map { |file| [file, File.mtime(file)] } \
-                                 .to_h
+        info = output_files.to_a.map { |file| [file.to_s, file.mtime] }.to_h
         " Prerequisite tasks: #{info}"
       end
+    end
+
+    ##
+    # We override the invoke command of rake to plug our own
+    # logging
+    def invoke_with_call_chain(*args)
+      succeeded = true
+      pre_log unless @silenced
+
+      begin
+        super
+        post_log unless @silenced
+      rescue ParsingError => error
+        error.log(@logger)
+        succeeded = false
+      end
+
+      post_log unless @silenced || !succeeded
+
+      @logger.flush
+      exit(1) unless succeeded
+
+      @metadata['last_executed'] = Time.now.to_i if needed?
     end
 
     ##
     # Override
     # Return wether the task need to be override
     def needed?
-      needed = prerequisite_tasks.empty? || @force
-      needed ||= prerequisite_tasks.any? do |t|
-        (!t.is_a? Chore) || t.output_files.any? { |f| changed?(f) }
+      if @needed.nil?
+        @needed = @force || prerequisite_tasks.empty? || input_files.changed.any?
       end
-      unless needed
-        @logger.important(" Skipping task: #{title}")
-        _debug_skip
+      @needed
+    end
+
+    class << self
+      def define_task(options, *args, &block)
+        chore = Rake.application.define_task(self, *args, &block)
+        chore.options = options
+        chore
       end
-      needed
     end
   end
 end

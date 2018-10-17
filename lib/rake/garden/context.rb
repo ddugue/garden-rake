@@ -4,6 +4,7 @@ require 'singleton'
 module Garden
   # Represent a global context object which enables to set global values and
   # thus transcend the block available values
+  # TODO: Make context dependant on thread
   class Context < OpenStruct
     include Singleton
 

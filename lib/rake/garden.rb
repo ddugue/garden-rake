@@ -15,9 +15,6 @@ module Garden
     $options ||= Option.new
   end
 
-  def metadata()
-    $metadata ||= JSONMetadata.new ".garden.json"
-  end
 
   def chore(*args, &block) # :doc:
     CommandChore.define_task(options.parse, *args, &block)

@@ -13,6 +13,7 @@ class ParsingError < StandardError
   ##
   # Log syntax error
   def log(logger)
+    logger.error(logger.line(char: '*'))
     logger.error(@message) if @message
     logger.error(@args.syntax)
   end

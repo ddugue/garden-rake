@@ -8,3 +8,4 @@ rspec -f d test/options.rb
 rspec -f d test/fileset.rb
 rspec -f d test/filepath.rb
 rspec -f d test/metadata.rb
+rspec -f d test/chore.rb

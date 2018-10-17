@@ -64,4 +64,8 @@ module Garden
       File.open(@filename, 'w+') { |file| JSON.dump(self, file) }
     end
   end
+
+  def metadata()
+    $metadata ||= JSONMetadata.new ".garden.json"
+  end
 end

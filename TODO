@@ -1,6 +1,4 @@
 
-+ Refactor metadata, Investigate method to proxy hash commands to data
-+ Test metadata
 + Test async manager
 + Add a file input output module
 
