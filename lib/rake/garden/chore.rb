@@ -147,7 +147,9 @@ module Garden
     # Return wether the task need to be override
     def needed?
       if @needed.nil?
-        @needed = @force || prerequisite_tasks.empty? || input_files.changed.any?
+        @needed = @force || \
+                  prerequisite_tasks.empty? || \
+                  input_files.since(@last_executed).any?
       end
       @needed
     end
