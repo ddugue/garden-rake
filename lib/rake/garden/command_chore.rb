@@ -1,9 +1,7 @@
-require 'rake/garden/noop'
-require 'rake/garden/chore'
-require 'rake/garden/file_chore'
-require 'rake/garden/commands/sync'
+require 'rake/garden/fileset'
 require 'rake/garden/async'
-require 'rake/garden/command_context'
+require 'rake/garden/commands/sync'
+require 'rake/garden/command_dsl'
 
 module Garden
   ##
@@ -12,58 +10,12 @@ module Garden
     include CommandsContext
     include AsyncManager
 
-    def lookup_prerequisite(prerequisite_name) # :nodoc:
-      if prerequisite_name == true || prerequisite_name == 'true'
-        @force = true
-        Noop.new @application
-      elsif (prerequisite_name.instance_of? String) \
-            && ((prerequisite_name.include? '.') || (prerequisite_name.include? '*'))
-        FileChore.new(prerequisite_name, @application)
-      else
-        super prerequisite_name.to_s
-      end
-    end
-
     def asyncs
       @queue
     end
-    # def initialize(task_name, app)
-    #   super
-    # end
-
-    # def wait_for(id=:all)
-    #   completed = false
-    #   until completed
-    #     completed = true
-    #     @queue.each do |process|
-    #       process.tick
-    #       completed = !process.running? & completed if id == :all
-    #       completed = !process.running? if id == process.id
-    #     end
-    #     sleep(0.0001)
-    #   end
-    # end
-
-
-    ##
-    # Start to run all command asynchronously
-    # def run
-    #   @queue.each_with_index { |item, index| item.start(index) }
-    # end
-
-    # def skipped
-    #   @skipped ||= @queue.count(&:skip?) || 0
-    # end
-
-    # def succeeded?
-    #   @succeeded = @queue.none?(&:error?)
-    # end
 
     def output_files
-      @output_files ||= @queue \
-                        .map(&:output_files) \
-                        .reject(&:nil?) \
-                        .reduce(FileSet.new, :+)
+      @output_files ||= Fileset.new(@queue)
     end
 
     ##
@@ -76,25 +28,18 @@ module Garden
       + "Changed files: #{output_files.length.to_s.bold}"
     end
 
-    def execute(args = nil)
-      @logger.info ' '
-      @logger.important " Running Task: #{title}"
-      super args
-      start
-
-      result # This wait for all the commands for result
-
+    def post_log
       @queue.each { |cmd| cmd.log(@logger) }
-
       @logger.info(Logger.line(char: '='))
       @logger.important(status)
       @logger.info(' ')
+      super
     end
 
-    ##
-    # We force the execution if the rakefile changed since last execution
-    def needed?
-      changed?(@application.rakefile) || super
+    def execute(args = nil)
+      super args
+      start
+      result # This wait for all the commands for result
     end
 
     ##

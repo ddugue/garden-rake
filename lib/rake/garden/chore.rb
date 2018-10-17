@@ -13,7 +13,8 @@ require 'rake/garden/noop'
 module Garden
   ##
   # A chore is a task you do not want to execute or to execute it as needed
-  # It tries to evaluate wether it should be executed or not
+  # It tries to evaluate wether it should be executed or not. It also
+  # includes its own logging system. See the +Logger+ class for details
   class Chore < Rake::Task
     attr_reader :last_executed
     attr_accessor :options
@@ -149,7 +150,8 @@ module Garden
       if @needed.nil?
         @needed = @force || \
                   prerequisite_tasks.empty? || \
-                  input_files.since(@last_executed).any?
+                  input_files.since(@last_executed).any? ||
+                  File.mtime(@application.rakefile) > @last_executed
       end
       @needed
     end
