@@ -14,10 +14,10 @@ options.test_env = env "boo", default: 24
 # options.from options.config
 
 chore :booty do
-  # sh "touch dav/a.txt"
+  sh "touch dav/a.txt"
   sh "dav/a.txt" >> "cp dav/a.txt dav/b.txt" >> "dav/b.txt"
-  # echo options.verbose.to_s
-  # echo options.test_env
+  echo options.verbose.to_s
+  echo options.test_env
 end
 
 # chore :bam => ["copy/*.txt"] do |t|

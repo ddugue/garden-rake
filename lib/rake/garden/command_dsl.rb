@@ -47,8 +47,8 @@ module Garden
 
     ##
     # Echo a simple message in the async context
-    def echo(*args)
-      queue EchoCommand.new(self, *args)
+    def echo(*args, **kwargs)
+      queue EchoCommand, *args, **kwargs
     end
 
     ##
