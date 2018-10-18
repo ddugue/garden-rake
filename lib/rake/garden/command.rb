@@ -65,7 +65,7 @@ module Garden
     # Return the color of the status text, yellow for skip, red for error, green
     # for success
     def status_color
-      if skip?
+      if skipped?
         :yellow
       elsif error?
         :red
@@ -77,7 +77,7 @@ module Garden
     ##
     # Return the status text of the command, skipped, error or success
     def status_text
-      if skip?
+      if skipped?
         'skipped'
       elsif error?
         'error'

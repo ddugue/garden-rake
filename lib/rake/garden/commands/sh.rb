@@ -3,7 +3,10 @@
 require 'open3'
 require 'time'
 
-# require 'rake/garden/ext/file'
+require 'singleton' # FOR RAKE EARLY AND LATE
+require 'rake/early_time'
+require 'rake/late_time'
+
 require 'rake/garden/filepath'
 require 'rake/garden/fileset'
 
@@ -11,8 +14,6 @@ require 'rake/garden/command'
 require 'rake/garden/command_args'
 
 module Garden
-  MAX_TIME = Time.at(12_147_483_647)
-  MIN_TIME = Time.at(0)
 
   ##
   # Represent the Command arguments for SH
@@ -68,6 +69,7 @@ module Garden
       @command = parsed_args.command
       @input = parsed_args.input
       @output = parsed_args.output
+      parsed_args
     end
 
     def command
@@ -80,8 +82,8 @@ module Garden
     def should_skip
       return true if super
       if @skip.nil?
-        min_output = output_files.map(&:mtime).min || MIN_TIME
-        max_input = input_files.map(&:mtime).max || MAX_TIME
+        min_output = output_files.map(&:mtime).min || Rake::EARLY
+        max_input = input_files.map(&:mtime).max || Rake::LATE
         @skip = max_input < min_output
       end
       @skip
@@ -133,7 +135,7 @@ module Garden
     def log_stdout(logger)
       return unless @stdout
 
-      logger.debug logger.pad_for_hierarchy(@order, "Executing: #{@command}")
+      logger.debug logger.pad_for_hierarchy(@order, "Executing: #{command}")
 
       @stdout.readlines.each do |line|
         line.strip!
@@ -171,7 +173,7 @@ module Garden
     end
 
     def to_s
-      @command.to_s
+      command.to_s
     end
   end
 end

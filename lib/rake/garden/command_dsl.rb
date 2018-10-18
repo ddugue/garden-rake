@@ -72,8 +72,8 @@ module Garden
 
     ##
     # Copy file -> location
-    def cp(file, name)
-      queue CopyCommand.new(self, file, name)
+    def cp(*args, **kwargs)
+      queue CopyCommand, *args, **kwargs
     end
 
     ##

@@ -18,6 +18,8 @@ chore :booty do
   sh "dav/a.txt" >> "cp dav/a.txt dav/b.txt" >> "dav/b.txt"
   echo options.verbose.to_s
   echo options.test_env
+  cp "dav/b.txt" >> "dav/d.txt"
+  cp "dav/e.txt" >> "dav/f.txt"
 end
 
 # chore :bam => ["copy/*.txt"] do |t|

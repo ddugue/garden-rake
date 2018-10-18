@@ -16,12 +16,19 @@ end
 module Garden
   # Class that represent a filepath
   class Filepath
+    include Enumerable
+
     attr_reader :path
     attr_reader :directory_root
 
     def initialize(path, directory_root = nil)
-      @path = path
-      @directory_root = directory_root || context.directory_root
+      if path.is_a? Filepath
+        @path = path.path
+        @directory_root = path.directory_root
+      else
+        @path = path.to_s
+        @directory_root = directory_root || context.directory_root
+      end
     end
 
     # Return the extension of the path
