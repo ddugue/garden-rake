@@ -66,8 +66,8 @@ module Garden
 
     ##
     # Change directory
-    def cd(dir)
-      queue ChangedirectoryCommand.new(self, dir)
+    def cd(*args, **kwargs)
+      queue ChangedirectoryCommand, *args, **kwargs
     end
 
     ##
