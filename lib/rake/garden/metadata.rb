@@ -66,7 +66,7 @@ module Garden
 
     class << self
       def metadata
-        @@metada ||= self.new '.graden.json'
+        @@metada ||= self.new '.garden.json'
       end
     end
   end

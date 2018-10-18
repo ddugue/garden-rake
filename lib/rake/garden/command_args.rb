@@ -109,7 +109,9 @@ end
 # Overriding string class to provide helper for our dsl
 class String
   def >>(other)
-    Garden::CommandArgs.new self, other
+    d = [self, other]
+    d.is_args = true
+    d
   end
 end
 
@@ -117,6 +119,15 @@ end
 # Overriding Array class to provide helper for our dsl
 class Array
   def >>(other)
-    Garden::CommandArgs.new self, other
+    if (self.is_args)
+      self << other
+      self
+    else
+      d = [self, other]
+      d.is_args = true
+      d
+    end
   end
+
+  attr_accessor :is_args
 end

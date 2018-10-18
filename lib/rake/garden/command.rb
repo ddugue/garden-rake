@@ -11,9 +11,6 @@ module Garden
   class Command
     include AsyncLifecycle
 
-    attr_accessor :input_files  # FileSet of input files
-    attr_accessor :output_files # Fileset of output files
-
     attr_writer :workdir        # Workdirectory for command
     attr_writer :env            # Environment variables
 
@@ -41,10 +38,13 @@ module Garden
       @env = nil
       @linenumber = line_number
 
-      @input_files = Fileset.new
-      @output_files = Fileset.new
-
       parse_args(args, kwargs)
+    end
+
+    ##
+    # Return output files based on the provided output files
+    def output_files
+      @output_files ||= Fileset.new
     end
 
     ##
@@ -121,6 +121,7 @@ module Garden
     # Return a fileset of file, assuming every file is NOT a glob
     # for glob, use +to_glob+
     def to_file(file)
+      return Fileset.new if file.nil?
       return Fileset.new(file.map { |f| to_file(f) }) if file.is_a? Array
       return Filepath.new(@workdir + file) if @workdir
       Filepath.new(file)
@@ -129,6 +130,7 @@ module Garden
     ##
     # Return a fileset built from a glob
     def to_glob(glob)
+      return Fileset.new if glob.nil?
       return Fileset.new(glob.map { |g| to_glob(g) }) if glob.is_a? Array
       return Fileset.from_glob(@workdir + glob) if @workdir
       Fileset.from_glob(glob)

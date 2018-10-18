@@ -57,7 +57,8 @@ module Garden
       # Create a fileset from a glob
       def from_glob(glob)
         fileset = new
-        directory_root = (GLOB.match(glob)[0] || '').to_s
+        directory_root = (GLOB.match(glob.to_s)[0] || '').to_s
+
         Context.instance.with_value :directory_root, directory_root do
           (Dir.glob glob).sort.each do |path|
             fileset << path

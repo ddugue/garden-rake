@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'open3'
 require 'time'
 
@@ -12,6 +14,8 @@ module Garden
   MAX_TIME = Time.at(12_147_483_647)
   MIN_TIME = Time.at(0)
 
+  ##
+  # Represent the Command arguments for SH
   class ShArgs < CommandArgs
     @syntax = <<~SYNTAX
       Make sure you have the right syntax for command 'sh'
@@ -25,11 +29,11 @@ module Garden
       Where 'input_files' and 'output_files' are file patterns:
       #{CommandArgs::FILE_PATTERNS}
     SYNTAX
-    CMD_NOT_STRING = "The command must be a string"
-    INVALID_LENGTH = "The number of arguments is invalid"
+    CMD_NOT_STRING = 'The command must be a string'
+    INVALID_LENGTH = 'The number of arguments is invalid'
 
     def validate
-      raise ParsingError.new(self, INVALID_LENGTH) if (length == 0 or length > 3)
+      raise ParsingError.new(self, INVALID_LENGTH) if length.zero? || length > 3
     end
 
     ##
@@ -58,12 +62,12 @@ module Garden
   class ShCommand < Command
     @Args = ShArgs
 
-    def parse_args(*args, **kwargs)
-      args = super
+    def parse_args(args, kwargs)
+      parsed_args = super
 
-      @command = args.command
-      @input = args.input
-      @output = args.output
+      @command = parsed_args.command
+      @input = parsed_args.input
+      @output = parsed_args.output
     end
 
     def command
@@ -92,13 +96,13 @@ module Garden
     ##
     # Return output files based on the provided output files
     def output_files
-      @output_files ||= to_file(@output)
+      @output_files ||= Fileset.new(to_file(@output))
     end
 
     ##
     # Returns wether there was an error in the execution
     def error?
-      super || (@thread && @thread.value.exitstatus != 0)
+      super || (@thread&.value&.exitstatus != 0)
     end
 
     ##
@@ -117,7 +121,7 @@ module Garden
     end
 
     def running?
-      @thread && @thread.status
+      @thread&.status
     end
 
     ##
@@ -125,11 +129,12 @@ module Garden
     def log_stdout(logger)
       return unless @stdout
 
-      logger.debug logger.class.pad_for_hierarchy(@order, "Executing: #{@command}")
+      logger.debug logger.pad_for_hierarchy(@order, "Executing: #{@command}")
 
       @stdout.readlines.each do |line|
         line.strip!
-        logger.verbose(logger.pad_for_hierarchy(@order, line)) unless line.empty?
+        next if line.empty?
+        logger.verbose(logger.pad_for_hierarchy(@order, line))
       end
     end
 

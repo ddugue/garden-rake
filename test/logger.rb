@@ -36,10 +36,10 @@ describe Garden::Logger do
       let(:aligned) { subject.class.align('PREFIX', 'MIDDLE', 'SUFFIX') }
 
       it 'should align to size of the terminal' do
-        expect(aligned.length).to eq(25)
+        expect(aligned.length).to eq(24)
       end
       it 'should be aligned to the right' do
-        expect(aligned).to eq('PREFIXMIDDLE       SUFFIX')
+        expect(aligned).to eq('PREFIXMIDDLE      SUFFIX')
       end
     end
 
@@ -47,7 +47,7 @@ describe Garden::Logger do
       let(:aligned) { subject.class.align('PREFIX'.blue, 'MIDDLE'.red, 'SUFFIX') }
 
       it 'should be aligned to the right' do
-        expect(aligned).to eq('PREFIX'.blue + 'MIDDLE'.red + '       SUFFIX')
+        expect(aligned).to eq('PREFIX'.blue + 'MIDDLE'.red + '      SUFFIX')
       end
     end
   end
