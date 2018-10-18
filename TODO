@@ -1,4 +1,5 @@
-
++ Test that SH works (process + success, process + skip, process + error)
++ Test that echo works (process, message)
 + Test async manager
 
 + Migrate commands

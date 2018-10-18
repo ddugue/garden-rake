@@ -44,7 +44,7 @@ module Garden
     ##
     # Return the number of async blocks that should be skipped
     def skips
-      @skips ||= asyncs.count(&:skip?) || 0
+      @skips ||= asyncs.count(&:skipped?) || 0
     end
 
     # Return the number of async blocks that suceeded

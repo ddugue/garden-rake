@@ -77,7 +77,7 @@ module Garden
     ##
     # Skip this command if all the input file are older than all the
     # output files
-    def skip?
+    def should_skip
       return true if super
       if @skip.nil?
         min_output = output_files.map(&:mtime).min || MIN_TIME
@@ -102,18 +102,22 @@ module Garden
     ##
     # Returns wether there was an error in the execution
     def error?
-      super || (@thread&.value&.exitstatus != 0)
+      super || ((@thread&.value&.exitstatus || 0) != 0)
     end
 
     ##
     # Returns wether the thread has finished executing
-    def completed?
-      @thread && !@thread.status
+    def should_complete
+      @skipped || (@thread && !@thread.status)
     end
 
     # Wrapper for popen3
     def popen3
-      Open3.popen3(@env, command, chdir: @workdir)
+      if @workdir
+        Open3.popen3((@env || {}), command, chdir: @workdir)
+      else
+        Open3.popen3((@env || {}), command)
+      end
     end
 
     def process

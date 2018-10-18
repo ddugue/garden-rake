@@ -78,7 +78,7 @@ module Garden
 
     # Returns wether there was no error in the execution
     def succeeded?
-      completed? && !error?
+      completed? && !error? && !skipped?
     end
     ##
     # End of STATUS

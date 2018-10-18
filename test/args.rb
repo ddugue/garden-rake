@@ -53,6 +53,15 @@ RSpec.describe Garden::ShCommand do
         expect(subject.instance_variable_get(:@input)).to eq('input.txt')
       end
     end
+
+    describe 'with input and command and output' do
+      let(:args) { 'input.txt' >> 'cmd' >> 'output.txt' }
+      it { is_expected.to have_attributes('command' => 'cmd') }
+      it "should have rigth input" do
+        expect(subject.instance_variable_get(:@input)).to eq('input.txt')
+        expect(subject.instance_variable_get(:@output)).to eq('output.txt')
+      end
+    end
     describe 'with inputs, output and command' do
       let(:args) { ['input.txt', 'input2.txt'] >> 'cmd' >> 'output.txt' }
       it { is_expected.to have_attributes('command' => 'cmd') }
