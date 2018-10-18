@@ -1,11 +1,6 @@
 
 + Test async manager
 
-+ Refactor sh
-
-
-+ Change command_context -> commands_dsl
-+ Move strace to commands
 + Migrate commands
 
 
