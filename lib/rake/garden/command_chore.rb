@@ -1,6 +1,9 @@
+require 'rake/garden/chore'
 require 'rake/garden/fileset'
 require 'rake/garden/async'
+require 'rake/garden/async_manager'
 require 'rake/garden/commands/sync'
+require 'rake/garden/command'
 require 'rake/garden/command_dsl'
 
 module Garden
@@ -8,7 +11,7 @@ module Garden
   # Chore that is meant to contain +Command+ and is responsible for
   # their execution
   class CommandChore < Chore
-    include CommandsContext
+    include CommandsDSL
     include AsyncManager
 
     def asyncs
@@ -25,7 +28,7 @@ module Garden
       " Result for #{title}: " \
       + "Success? #{succeeded? ? 'Yes'.green : 'No'.red}, " \
       + "Skipped: #{skips.to_s.yellow}, " \
-      + "Total user time: #{Logger.render_time(time).blue}, " \
+      + "Total user time: #{Logger.time(time).blue}, " \
       + "Changed files: #{output_files.length.to_s.bold}"
     end
 

@@ -26,6 +26,12 @@ module Garden
     end
 
     ##
+    # Return the full length
+    def length
+      to_a.length
+    end
+
+    ##
     # Filter a fileset by extension
     # Returns a +Fileset+
     def ext(extension, &block)

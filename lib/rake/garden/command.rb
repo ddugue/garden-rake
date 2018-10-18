@@ -35,8 +35,7 @@ module Garden
       location ? location.lineno : 0
     end
 
-    def initialize(parent, *args, **kwargs)
-      @parent = parent
+    def initialize(*args, **kwargs)
 
       @workdir = nil
       @env = nil
@@ -49,10 +48,17 @@ module Garden
     end
 
     ##
+    # Iterate over output_files
+    def each(&block)
+      return enum_for(:each) unless block_given?
+      output_files.each { |f| f.each(&block) }
+    end
+
+    ##
     # Render the prefix of the status
     # The prefix consist of the queue number, and the source of the execution
     def status_prefix
-      "#{Logger.hierarchy execution_order}rakefile:#{@linenumber.to_s.bold} "
+      " #{Logger.hierarchy execution_order}rakefile:#{@linenumber.to_s.bold} "
     end
 
     ##
@@ -83,7 +89,7 @@ module Garden
     ##
     # Return the suffix of the status long info
     def status_suffix
-      time = Logger.render_time(self.time).to_s.blue
+      time = Logger.time(self.time).to_s.blue
       "[#{status_text.colorize(status_color)}] ... #{time}"
     end
 
@@ -110,6 +116,7 @@ module Garden
       'Abstract Command'
     end
 
+    def skip?; end
     ##
     # Return a fileset of file, assuming every file is NOT a glob
     # for glob, use +to_glob+

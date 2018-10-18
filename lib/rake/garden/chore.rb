@@ -4,8 +4,8 @@ require 'rake'
 require 'rake/task'
 require 'rake/application'
 
-require 'rake/garden/logger'
 require 'rake/garden/metadata'
+require 'rake/garden/logger'
 require 'rake/garden/fileset'
 require 'rake/garden/filepath'
 require 'rake/garden/noop'
@@ -20,7 +20,7 @@ module Garden
     attr_accessor :options
 
     def initialize(task_name, app)
-      @metadata = $metadata.namespace(task_name)
+      @metadata = JSONMetadata.metadata.namespace(task_name)
       @last_executed = Time.at(@metadata.fetch('last_executed', 0) || 0)
       @logger = Logger.new(level: $LOGLEVEL || Logger::INFO)
       @force = false # Wether to force the task to execute
@@ -129,7 +129,6 @@ module Garden
 
       begin
         super
-        post_log unless @silenced
       rescue ParsingError => error
         error.log(@logger)
         succeeded = false

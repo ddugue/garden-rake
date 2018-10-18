@@ -26,9 +26,10 @@ module Garden
       #{CommandArgs::FILE_PATTERNS}
     SYNTAX
     CMD_NOT_STRING = "The command must be a string"
+    INVALID_LENGTH = "The number of arguments is invalid"
 
     def validate
-      raise ParsingError.new(self) if (length == 0 or length > 3)
+      raise ParsingError.new(self, INVALID_LENGTH) if (length == 0 or length > 3)
     end
 
     ##
@@ -60,13 +61,13 @@ module Garden
     def parse_args(*args, **kwargs)
       args = super
 
-      @cmd = args.command
+      @command = args.command
       @input = args.input
       @output = args.output
     end
 
     def command
-      @cmd.to_s
+      @command.to_s
     end
 
     ##
@@ -75,18 +76,23 @@ module Garden
     def skip?
       return true if super
       if @skip.nil?
-        min_output = @output.map { |f| File.safe_mtime f }.min || MIN_TIME
-        max_input = @input.map { |f| File.safe_mtime f }.max || MAX_TIME
+        min_output = output_files.map(&:mtime).min || MIN_TIME
+        max_input = input_files.map(&:mtime).max || MAX_TIME
         @skip = max_input < min_output
       end
       @skip
     end
 
     ##
+    # Return input files based on the provided output files
+    def input_files
+      @input_files ||= to_glob(@input)
+    end
+
+    ##
     # Return output files based on the provided output files
     def output_files
-      Fileset.new(@output.map { |f| Filepath.new(f) })
-      @skip ? nil : @output
+      @output_files ||= to_file(@output)
     end
 
     ##
@@ -98,7 +104,6 @@ module Garden
     ##
     # Returns wether the thread has finished executing
     def completed?
-      # puts "#{@thread.status}"
       @thread && !@thread.status
     end
 
@@ -120,7 +125,7 @@ module Garden
     def log_stdout(logger)
       return unless @stdout
 
-      logger.debug logger.pad_for_hierarchy(@order, "Executing: #{@cmd}")
+      logger.debug logger.class.pad_for_hierarchy(@order, "Executing: #{@command}")
 
       @stdout.readlines.each do |line|
         line.strip!
@@ -149,13 +154,15 @@ module Garden
       log_stderr(logger)
     end
 
+    ##
+    # Return the result of this command
     def result
       super
       @stdout
     end
 
     def to_s
-      @cmd.to_s
+      @command.to_s
     end
   end
 end

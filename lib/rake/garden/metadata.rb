@@ -63,9 +63,11 @@ module Garden
     def save
       File.open(@filename, 'w+') { |file| JSON.dump(self, file) }
     end
-  end
 
-  def metadata()
-    $metadata ||= JSONMetadata.new ".garden.json"
+    class << self
+      def metadata
+        @@metada ||= self.new '.graden.json'
+      end
+    end
   end
 end

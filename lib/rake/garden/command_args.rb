@@ -16,9 +16,9 @@ module Garden
     ##
     # Log syntax error
     def log(logger)
-      logger.error(logger.line(char: '*'))
-      logger.error(@message) if @message
-      logger.error(@args.syntax)
+      logger.error(logger.class.line(char: '*'))
+      logger.error(' ' + @message) if @message
+      logger.error(@args.syntax.lines.map { |a| ' ' + a }.join)
     end
   end
 

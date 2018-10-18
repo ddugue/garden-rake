@@ -1,11 +1,11 @@
 require 'rake/garden/command'
-require 'rake/garden/command_context'
+require 'rake/garden/command_dsl'
 
 module Garden
   ##
   # Represent a block that will run synchronously
   class SyncCommand < Command
-    include CommandsContext
+    include CommandsDSL
 
     def initialize(&block)
       @block = block

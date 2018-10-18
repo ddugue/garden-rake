@@ -145,7 +145,7 @@ module Garden
       # Align text with terminal witdth by making sure suffix is on the left
       # TODO: Add possibility of aligning right?
       def align(prefix, center, suffix)
-        diff = terminal_width - (prefix + center + suffix).uncolorize.length
+        diff = terminal_width - 1 - (prefix + center + suffix).uncolorize.length
         "#{prefix}#{center}#{' ' * diff}#{suffix}"
       end
 

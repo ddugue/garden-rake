@@ -9,83 +9,85 @@ require 'rake/garden/commands/sh'
 require 'rake/garden/commands/mkdir'
 require 'rake/garden/commands/daemon'
 
-##
-# Represent a dsl that allows to queue commands
-# commands
-module CommandsContext
-  attr_accessor :workdir # Actual work directory of the chore
-  attr_accessor :env     # Environment variable passed to commands
-
-  def initialize(*args)
-    @queue = []
-    @workdir = Pathname.new(Pathname.pwd)
-    @env = {}
-    super
-  end
-
+module Garden
   ##
-  # Queue command for execution
-  def queue(cls, args, kwargs)
-    command = cls.new(*args, **kwargs)
+  # Represent a dsl that allows to queue commands
+  # commands
+  module CommandsDSL
+    attr_accessor :workdir # Actual work directory of the chore
+    attr_accessor :env     # Environment variable passed to commands
 
-    command.manager = self     if self.is_a? AsyncManager
-    command.workdir = @workdir if @workdir
-    command.env = @env.clone   if @env
+    def initialize(*args)
+      @queue = []
+      @workdir = Pathname.new(Pathname.pwd)
+      @env = {}
+      super
+    end
 
-    @logger.debug(" Queuing '#{command}'") if @logger
+    ##
+    # Queue command for execution
+    def queue(cls, args, kwargs)
+      command = cls.new(*args, **kwargs)
 
-    @queue << command
-    command
-  end
+      command.manager = self     if self.is_a? AsyncManager
+      command.workdir = @workdir if @workdir
+      command.env = @env.clone   if @env
 
-  ##
-  # Create synchronously a folder
-  def mkdir(folder)
-    queue MakeDirCommand.new(self, folder)
-  end
+      @logger.debug(" Queuing '#{command}'") if @logger
 
-  ##
-  # Echo a simple message in the async context
-  def echo(*args)
-    queue EchoCommand.new(self, *args)
-  end
+      @queue << command
+      command
+    end
 
-  ##
-  # Set variable environment
-  # Can be used like set :VAR => value or set :VAR, value or set VAR:value
-  def set(*args)
-    queue SetCommand.new(self, *args)
-  end
+    ##
+    # Create synchronously a folder
+    def mkdir(folder)
+      queue MakeDirCommand.new(self, folder)
+    end
 
-  ##
-  # Unset an environment variable
-  def unset(var)
-    queue UnsetCommand.new(self, var)
-  end
+    ##
+    # Echo a simple message in the async context
+    def echo(*args)
+      queue EchoCommand.new(self, *args)
+    end
 
-  ##
-  # Change directory
-  def cd(dir)
-    queue ChangedirectoryCommand.new(self, dir)
-  end
+    ##
+    # Set variable environment
+    # Can be used like set :VAR => value or set :VAR, value or set VAR:value
+    def set(*args)
+      queue SetCommand.new(self, *args)
+    end
 
-  ##
-  # Copy file -> location
-  def cp(file, name)
-    queue CopyCommand.new(self, file, name)
-  end
+    ##
+    # Unset an environment variable
+    def unset(var)
+      queue UnsetCommand.new(self, var)
+    end
 
-  ##
-  # Run a shell command
-  def sh(*args, **kwargs)
-    queue ShCommand, *args, **kwargs
-  end
+    ##
+    # Change directory
+    def cd(dir)
+      queue ChangedirectoryCommand.new(self, dir)
+    end
 
-  def strace(*args)
-    queue StraceCommand.new(self, ShArgs.new(*args))
-  end
+    ##
+    # Copy file -> location
+    def cp(file, name)
+      queue CopyCommand.new(self, file, name)
+    end
 
-  def daemon(cmd)
-    queue DaemonCommand.new(self, cmd)
+    ##
+    # Run a shell command
+    def sh(*args, **kwargs)
+      queue ShCommand, *args, **kwargs
+    end
+
+    def strace(*args)
+      queue StraceCommand.new(self, ShArgs.new(*args))
+    end
+
+    def daemon(cmd)
+      queue DaemonCommand.new(self, cmd)
+    end
   end
 end
