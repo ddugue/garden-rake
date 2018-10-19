@@ -42,8 +42,8 @@ module Garden
 
     ##
     # Create synchronously a folder
-    def mkdir(folder)
-      queue MakeDirCommand.new(self, folder)
+    def mkdir(*args, **kwargs)
+      queue MakeDirCommand, args, kwargs
     end
 
     ##

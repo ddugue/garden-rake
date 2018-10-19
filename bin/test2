@@ -13,3 +13,4 @@ rspec -f d test/sh.rb
 rspec -f d test/echo.rb
 rspec -f d test/cp.rb
 rspec -f d test/cd.rb
+rspec -f d test/mkdir.rb

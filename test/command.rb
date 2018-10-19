@@ -1,3 +1,5 @@
+require 'pathname'
+
 require 'rake/garden/command'
 require 'rake/garden/filepath'
 
@@ -12,11 +14,11 @@ RSpec.describe Garden::Command do
       expect(subject.to_file(['a.txt']).to_a).to eq(['a.txt'])
     end
     it "should prepend workdir to a string" do
-      subject.workdir = 'dav/'
+      subject.workdir = Pathname.new 'dav/'
       expect(subject.to_file('a.txt')).to eq('dav/a.txt')
     end
     it "should prepend workdir to an array string" do
-      subject.workdir = 'dav/'
+      subject.workdir = Pathname.new 'dav/'
       expect(subject.to_file(['a.txt']).to_a).to eq(['dav/a.txt'])
     end
   end
