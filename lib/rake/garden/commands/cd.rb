@@ -35,8 +35,9 @@ module Garden
   class ChangedirectoryCommand < Command
     @Args = CdArgs
 
-    def workdir=(value)
-      @manager.workdir = value.join(@args.folder)
+    def initialize(*arg, **kwargs)
+      super
+      @manager.workdir = @manager.workdir.join(@args.folder)
     end
 
     def to_s

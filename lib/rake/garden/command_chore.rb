@@ -29,7 +29,7 @@ module Garden
       + "Success? #{succeeded? ? 'Yes'.green : 'No'.red}, " \
       + "Skipped: #{skips.to_s.yellow}, " \
       + "Total user time: #{Logger.time(time).blue}, " \
-      + "Changed files: #{output_files.length.to_s.bold}"
+      + "Output files: #{output_files.length.to_s.bold}"
     end
 
     def post_log
