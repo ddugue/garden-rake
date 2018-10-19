@@ -23,7 +23,7 @@ end
 
 RSpec.describe Garden::ShArgs do
   context "with all args" do
-    subject { Garden::ShArgs.new(["a.txt", "%b.txt"], "cmd %f", ["c.txt"]) }
+    subject { Garden::ShArgs.new(nil, ["a.txt", "%b.txt"], "cmd %f", ["c.txt"]) }
     it "should work with no context" do
       expect(subject.input).to eq(["a.txt", "%b.txt"])
       expect(subject.command).to eq("cmd %f")

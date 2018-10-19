@@ -48,7 +48,7 @@ module Garden
 
     # Returns the time it took to complete the lifecycle
     def time
-      return 0 if @end_time.nil? || @start_time.nil?
+      return nil if @end_time.nil? || @start_time.nil?
       @end_time - @start_time
     end
 

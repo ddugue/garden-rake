@@ -104,7 +104,6 @@ module Garden
       if application.options.dryrun
         @logger.important " Running Task (dry run): #{title} "
       elsif !self.needed?
-        puts "#{name}: #{@force} ** #{needed?}"
         @logger.important " Skipping Task: #{title} "
       else
         @logger.important " Running Task: #{title} "
