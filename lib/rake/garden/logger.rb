@@ -156,7 +156,7 @@ module Garden
       # Pad based on the hierarchy level, used to display information
       # under an item made prefixed with a +hierarchy+ block
       def pad_for_hierarchy(number, message)
-        (' ' * hierarchy(number).length) + message.to_s
+        (' ' * (hierarchy(number).length + 1)) +  message.to_s
       end
     end
   end

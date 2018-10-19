@@ -22,7 +22,7 @@ module Garden
     def initialize(task_name, app)
       @metadata = JSONMetadata.metadata.namespace(task_name)
       @last_executed = Time.at(@metadata.fetch('last_executed', 0) || 0)
-      @logger = Logger.new(level: $LOGLEVEL || Logger::INFO)
+      @logger = Logger.new(level: $LOGLEVEL || Logger::DEBUG)
       @force = false # Wether to force the task to execute
       super
     end

@@ -55,8 +55,8 @@ module Garden
     ##
     # Set variable environment
     # Can be used like set :VAR => value or set :VAR, value or set VAR:value
-    def set(*args)
-      queue SetCommand.new(self, *args)
+    def set(*args, **kwargs)
+      queue SetCommand, args, kwargs
     end
 
     ##

@@ -63,7 +63,7 @@ module Garden
     ##
     # Get value from args or kwargs if it is a symbol
     def get(index)
-      @args[index]
+      args[index]
     end
 
     ##

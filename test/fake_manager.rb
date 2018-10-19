@@ -5,9 +5,12 @@ require 'rake/garden/async_manager'
 class FakeManager
   include Garden::AsyncManager
   attr_accessor :workdir
+  attr_accessor :env
+
   def initialize
     @asyncs = []
     @workdir = Pathname.new('/')
+    @env = {}
   end
 
   def asyncs

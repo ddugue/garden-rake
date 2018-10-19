@@ -27,6 +27,8 @@ chore :booty => [true, "copy/*.txt"] do |t|
   cd "dav"
   sh "touch e.txt"
   mkdir "/tmp/testtest"
+  set DEBUG: true
+  sh "echo $DEBUG"
 end
 
 # chore :bam => ["copy/*.txt"] do |t|

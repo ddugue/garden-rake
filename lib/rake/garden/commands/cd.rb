@@ -5,7 +5,7 @@ require 'rake/garden/command_args'
 
 module Garden
   ##
-  # Represent the args for the cmmand CD
+  # Represent the args for the command CD
   class CdArgs < CommandArgs
     @syntax = <<~SYNTAX
       Make sure you have the right syntax for command 'cd'

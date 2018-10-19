@@ -126,7 +126,7 @@ module Garden
     def log_stdout(logger)
       return unless @stdout
 
-      logger.debug logger.pad_for_hierarchy(@order, " Executing: #{command}")
+      logger.debug logger.pad_for_hierarchy(@order, "Executing: #{command}")
 
       @stdout.readlines.each do |line|
         line.strip!
