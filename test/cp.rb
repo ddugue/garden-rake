@@ -13,8 +13,7 @@ RSpec.describe Garden::CopyCommand, "processing" do
 
   it "should be able to process a simple command simply" do
     manager = FakeManager.new
-    cmd = Garden::CopyCommand.new "/tmp/cptest/a.txt", "/tmp/cptest/b.txt"
-    cmd.manager = manager
+    cmd = Garden::CopyCommand.new manager, "/tmp/cptest/a.txt", "/tmp/cptest/b.txt"
     manager.append(cmd)
     cmd.start
     cmd.result
@@ -24,8 +23,7 @@ RSpec.describe Garden::CopyCommand, "processing" do
     manager = FakeManager.new
     sleep 0.01
     %x( touch /tmp/cptest/b.txt )
-    cmd = Garden::CopyCommand.new "/tmp/cptest/a.txt", "/tmp/cptest/b.txt"
-    cmd.manager = manager
+    cmd = Garden::CopyCommand.new manager, "/tmp/cptest/a.txt", "/tmp/cptest/b.txt"
     manager.append(cmd)
     cmd.start
     cmd.result
@@ -35,8 +33,7 @@ RSpec.describe Garden::CopyCommand, "processing" do
 
   it "should be able to use a filepath" do
     manager = FakeManager.new
-    cmd = Garden::CopyCommand.new Garden::Filepath.new("/tmp/cptest/a.txt"), "/tmp/cptest/b.txt"
-    cmd.manager = manager
+    cmd = Garden::CopyCommand.new manager, Garden::Filepath.new("/tmp/cptest/a.txt"), "/tmp/cptest/b.txt"
     manager.append(cmd)
     cmd.start
     cmd.result

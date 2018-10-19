@@ -7,8 +7,7 @@ RSpec.describe Garden::ChangedirectoryCommand, "processing" do
   context "only workdir" do
     it "should set the right workdir on manager" do
       manager = FakeManager.new
-      cmd = Garden::ChangedirectoryCommand.new "tmp"
-      cmd.manager = manager
+      cmd = Garden::ChangedirectoryCommand.new manager, "tmp"
       cmd.workdir = manager.workdir
       expect(manager.workdir.to_s).to eq('/tmp/')
     end

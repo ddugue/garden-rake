@@ -25,10 +25,11 @@ module Garden
       command_args
     end
 
-    def initialize(*args, **kwargs)
+    def initialize(manager, *args, **kwargs)
       @workdir = nil
       @env = nil
       @linenumber = self.class.line_number
+      @manager = manager
       @args = parse_args(args, kwargs)
     end
 

@@ -8,8 +8,7 @@ RSpec.describe Garden::MakeDirCommand, "processing" do
     it "should set the right workdir on manager" do
       %x( rm -fr /tmp/testmakedir )
       manager = FakeManager.new
-      cmd = Garden::MakeDirCommand.new "/tmp/testmakedir"
-      cmd.manager = manager
+      cmd = Garden::MakeDirCommand.new manager, "/tmp/testmakedir"
       manager.append(cmd)
       cmd.start
       cmd.result

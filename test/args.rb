@@ -2,6 +2,7 @@ require 'rake/garden/command_args'
 require 'rake/garden/commands/sh'
 require 'rake/garden/context'
 require 'rake/garden/filepath'
+require_relative 'fake_manager'
 
 RSpec.describe Garden::CommandArgs, "#initialize" do
   it "should create an arg based on a string" do
@@ -42,7 +43,7 @@ end
 
 RSpec.describe Garden::ShCommand do
   context 'with arguments' do
-    subject { Garden::ShCommand.new(*args) }
+    subject { Garden::ShCommand.new(FakeManager.new, *args) }
 
     describe 'with only command' do
       let(:args) { 'cmd' }

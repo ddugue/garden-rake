@@ -35,8 +35,7 @@ RSpec.describe Garden::ShCommand, "processing"do
 
   it "should be able to process a simple command simply" do
     manager = FakeManager.new
-    cmd = Garden::ShCommand.new "touch /tmp/shtest/c.txt"
-    cmd.manager = manager
+    cmd = Garden::ShCommand.new manager, "touch /tmp/shtest/c.txt"
     manager.append(cmd)
     cmd.start
     cmd.result
@@ -45,8 +44,7 @@ RSpec.describe Garden::ShCommand, "processing"do
 
   it "should be able to process an error command gracefully" do
     manager = FakeManager.new
-    cmd = Garden::ShCommand.new "rm /tmp/shtest"
-    cmd.manager = manager
+    cmd = Garden::ShCommand.new manager, "rm /tmp/shtest"
     manager.append(cmd)
     cmd.start
     cmd.result
@@ -57,8 +55,7 @@ RSpec.describe Garden::ShCommand, "processing"do
     manager = FakeManager.new
     sleep 0.01
     %x( touch /tmp/shtest/b.txt )
-    cmd = Garden::ShCommand.new("/tmp/shtest/a.txt", "rm /tmp/shtest", "/tmp/shtest/b.txt")
-    cmd.manager = manager
+    cmd = Garden::ShCommand.new(manager, "/tmp/shtest/a.txt", "rm /tmp/shtest", "/tmp/shtest/b.txt")
     manager.append(cmd)
     cmd.start
     cmd.result

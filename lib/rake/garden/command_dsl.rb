@@ -28,9 +28,9 @@ module Garden
     # Queue command for execution
     def queue(cls, args, kwargs)
       args = args.to_a
-      command = cls.new(*args, **kwargs)
+      command = cls.new(self, *args, **kwargs)
 
-      command.manager = self     if self.is_a? AsyncManager
+      # command.manager = self     if self.is_a? AsyncManager
       command.workdir = @workdir if @workdir
       command.env = @env.clone   if @env
 
