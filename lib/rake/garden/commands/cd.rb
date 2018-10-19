@@ -4,7 +4,6 @@ require 'rake/garden/command'
 require 'rake/garden/command_args'
 
 module Garden
-
   ##
   # Represent the args for the cmmand CD
   class CdArgs < CommandArgs
@@ -23,7 +22,11 @@ module Garden
     ##
     # Return a fileset group for input files
     def folder
-      return format_file(get(0))
+      @folder ||= begin
+        f = format_file(get(0))
+        f += '/' unless f.end_with? '/'
+        f
+      end
     end
   end
 
@@ -32,20 +35,12 @@ module Garden
   class ChangedirectoryCommand < Command
     @Args = CdArgs
 
-    def parse_args(args, kwargs)
-      parsed_args = super
-
-      @folder = parsed_args.folder
-      @folder += '/' unless @folder.end_with? '/'
-      parsed_args
-    end
-
     def workdir=(value)
-      @manager.workdir = value.join(@folder)
+      @manager.workdir = value.join(@args.folder)
     end
 
     def to_s
-      "Changing directory to #{@folder}"
+      "Changing directory to #{@args.folder}"
     end
   end
 end

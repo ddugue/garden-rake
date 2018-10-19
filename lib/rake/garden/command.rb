@@ -15,8 +15,9 @@ module Garden
     attr_writer :env            # Environment variables
 
     attr_reader :linenumber
+
     ##
-    # Parse arguments received by the initializer
+    # Parse args and validate data
     def parse_args(args, kwargs)
       return unless self.class.Args
       command_args = self.class.Args.new(self, *args, **kwargs)
@@ -25,12 +26,10 @@ module Garden
     end
 
     def initialize(*args, **kwargs)
-
       @workdir = nil
       @env = nil
       @linenumber = self.class.line_number
-
-      parse_args(args, kwargs)
+      @args = parse_args(args, kwargs)
     end
 
     ##
@@ -117,7 +116,7 @@ module Garden
     def to_file(file)
       return Fileset.new if file.nil?
       return Fileset.new(file.map { |f| to_file(f) }) if file.is_a? Array
-      return Filepath.new(@workdir + file) if @workdir
+      return Filepath.new(@workdir.join(file.to_s)) if @workdir
       Filepath.new(file)
     end
 

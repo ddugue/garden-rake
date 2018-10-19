@@ -37,6 +37,7 @@ module Garden
         @queue.each { |cmd| cmd.log(@logger) }
         @logger.info(Logger.line(char: '='))
         @logger.important(status)
+        @logger.debug { " Files changed: #{output_files.to_a.map(&:to_s)}" }
       end
       @logger.info(' ')
       super

@@ -39,6 +39,6 @@ RSpec.describe Garden::EchoCommand, "processing"do
   it "should be able to process a simple command simply" do
     msg = "MESSAGE"
     cmd = Garden::EchoCommand.new msg
-    expect(cmd.instance_variable_get(:@message)).to eq(msg)
+    expect(cmd.instance_variable_get(:@args).message).to eq(msg)
   end
 end

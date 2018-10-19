@@ -8,7 +8,7 @@ module Garden
   # Represent the args of the echo cmmand
   class EchoArgs < CommandArgs
     def message
-      get(0).to_s
+      @message ||= get(0).to_s
     end
   end
 
@@ -17,16 +17,9 @@ module Garden
   class EchoCommand < Command
     @Args = EchoArgs
 
-    def parse_args(args, kwargs)
-      parsed_args = super
-      @message = parsed_args.message
-    end
-
     def log(logger)
       prefix = status_prefix
-      logger.info(prefix + @message)
+      logger.info(prefix + @args.message)
     end
-
-    def process; end
   end
 end

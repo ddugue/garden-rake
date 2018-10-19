@@ -40,13 +40,13 @@ module Garden
     ##
     # Return a fileset group for input files
     def input
-      return format_file(get(0)) if length >= 2
+      @input ||= format_file(get(0)) if length >= 2
     end
 
     ##
     # Return a fileset group for output files
     def output
-      return format_file(get(-1)) if length >= 3
+       @output ||= format_file(get(-1)) if length >= 3
     end
 
     ##
@@ -54,7 +54,7 @@ module Garden
     def command
       str = length == 1 ? get(0) : get(1)
       raise ParsingError.new(self, CMD_NOT_STRING) unless str.is_a?(String)
-      format_file(str)
+      @cmd ||= format_file(str)
     end
   end
 
@@ -63,17 +63,8 @@ module Garden
   class ShCommand < Command
     @Args = ShArgs
 
-    def parse_args(args, kwargs)
-      parsed_args = super
-
-      @command = parsed_args.command
-      @input = parsed_args.input
-      @output = parsed_args.output
-      parsed_args
-    end
-
     def command
-      @command.to_s
+      @args.command
     end
 
     ##
@@ -92,13 +83,13 @@ module Garden
     ##
     # Return input files based on the provided output files
     def input_files
-      @input_files ||= to_glob(@input)
+      @input_files ||= to_glob(@args.input)
     end
 
     ##
     # Return output files based on the provided output files
     def output_files
-      @output_files ||= Fileset.new(to_file(@output))
+      @output_files ||= Fileset.new(to_file(@args.output))
     end
 
     ##
@@ -135,7 +126,7 @@ module Garden
     def log_stdout(logger)
       return unless @stdout
 
-      logger.debug logger.pad_for_hierarchy(@order, "Executing: #{command}")
+      logger.debug logger.pad_for_hierarchy(@order, " Executing: #{command}")
 
       @stdout.readlines.each do |line|
         line.strip!

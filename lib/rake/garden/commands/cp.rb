@@ -22,19 +22,20 @@ module Garden
     ##
     # Return a fileset group for input files
     def input
-      format_file(get(0))
+      @input ||= format_file(get(0))
     end
 
     ##
     # Return a fileset group for output files
     def output
-      format_file(get(-1))
+      @output ||= format_file(get(-1))
     end
 
     def command
       nil
     end
   end
+
   ##
   # Abstract command that wraps a cp
   class CopyCommand < ShCommand
@@ -43,13 +44,13 @@ module Garden
     ##
     # Return input files based on the provided output files
     def input_files
-      @input_files ||= to_file(@input)
+      @input_files ||= to_file(@args.input)
     end
 
     ##
     # Return output files based on the provided output files
     def output_files
-      @output_files ||= to_file(@output)
+      @output_files ||= to_file(@args.output)
     end
 
     def command
@@ -57,7 +58,7 @@ module Garden
     end
 
     def to_s
-      "Copying #{@input} to #{@output}"
+      "Copying #{@args.input} to #{@args.output}"
     end
   end
 end
