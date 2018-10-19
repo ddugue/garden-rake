@@ -27,6 +27,7 @@ module Garden
     ##
     # Queue command for execution
     def queue(cls, args, kwargs)
+      args = args.to_a
       command = cls.new(*args, **kwargs)
 
       command.manager = self     if self.is_a? AsyncManager
@@ -48,7 +49,7 @@ module Garden
     ##
     # Echo a simple message in the async context
     def echo(*args, **kwargs)
-      queue EchoCommand, *args, **kwargs
+      queue EchoCommand, args, kwargs
     end
 
     ##
@@ -67,19 +68,19 @@ module Garden
     ##
     # Change directory
     def cd(*args, **kwargs)
-      queue ChangedirectoryCommand, *args, **kwargs
+      queue ChangedirectoryCommand, args, kwargs
     end
 
     ##
     # Copy file -> location
     def cp(*args, **kwargs)
-      queue CopyCommand, *args, **kwargs
+      queue CopyCommand, args, kwargs
     end
 
     ##
     # Run a shell command
     def sh(*args, **kwargs)
-      queue ShCommand, *args, **kwargs
+      queue ShCommand, args, kwargs
     end
 
     def strace(*args)

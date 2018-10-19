@@ -128,10 +128,10 @@ module Garden
         hours = time / 3600
         minutes = (time % 3600 / 60)
         case time
-        when 0..9 then "#{time.round(3)}s".ljust(6)
-        when 10..59 then "#{time.round(2)}s".ljust(6)
-        when 60..3599 then "#{minutes}m#{(time % 60)}s".ljust(6)
-        else "#{hours}h#{minutes.to_s.ljust(2, '0')}m".ljust(6)
+        when 0..9 then "#{time.round(3)}s"
+        when 10..59 then "#{time.round(2)}s"
+        when 60..3599 then "#{minutes}m#{(time % 60)}s"
+        else "#{hours}h#{minutes.to_s.ljust(2, '0')}m"
         end
       end
 

@@ -16,6 +16,7 @@ module Garden
     ##
     # Log syntax error
     def log(logger)
+      logger.error(' ' + 'Error on rakefile:' + @args.linenumber.to_s.bold)
       logger.error(logger.class.line(char: '*'))
       logger.error(' ' + @message) if @message
       logger.error(@args.syntax.lines.map { |a| ' ' + a }.join)
@@ -36,9 +37,16 @@ module Garden
       * a literal array mixing glob/filenames
     FILEPATTERNS
 
-    def initialize(*args, **kwargs)
+    def initialize(command, *args, **kwargs)
+      @command = command
       @args = args
       @kwargs = kwargs
+    end
+
+    ##
+    # Returns the linenumber in the rakefile where command was created
+    def linenumber
+      return @command.nil? ? 0 : @command.linenumber
     end
 
     ##
@@ -88,7 +96,7 @@ module Garden
     def format_file(str)
       return str unless context.file
       return str.map { |s| format_file(s) } if str.is_a? Array
-      context.file.format(str)
+      context.file.format(str.to_s)
     end
 
     class << self
@@ -127,6 +135,18 @@ class Array
       d.is_args = true
       d
     end
+  end
+
+  def to_a
+    a = Array.new
+    each do |item|
+      if item.respond_to?(:is_args) && item.is_args
+        a.concat(item)
+      else
+        a.append(item)
+      end
+    end
+    a
   end
 
   attr_accessor :is_args

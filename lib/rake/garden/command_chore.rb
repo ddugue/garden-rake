@@ -33,9 +33,11 @@ module Garden
     end
 
     def post_log
-      @queue.each { |cmd| cmd.log(@logger) }
-      @logger.info(Logger.line(char: '='))
-      @logger.important(status)
+      if needed?
+        @queue.each { |cmd| cmd.log(@logger) }
+        @logger.info(Logger.line(char: '='))
+        @logger.important(status)
+      end
       @logger.info(' ')
       super
     end

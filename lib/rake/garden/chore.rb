@@ -66,12 +66,11 @@ module Garden
       if [true, 'true'].include? prerequisite_name
         # If true, it is simply an hack to make the chore always execute
         # even when it has dependencies
-
         @force = true
         Noop.new @application
       elsif Filepath.is_file? prerequisite_name
         # We convert filepath into FileChores
-        require 'rake/garden/file_chore' unless FileChore
+        require 'rake/garden/file_chore'
 
         FileChore.new(prerequisite_name, @application)
       else
@@ -104,6 +103,9 @@ module Garden
       @logger.info ' '
       if application.options.dryrun
         @logger.important " Running Task (dry run): #{title} "
+      elsif !self.needed?
+        puts "#{name}: #{@force} ** #{needed?}"
+        @logger.important " Skipping Task: #{title} "
       else
         @logger.important " Running Task: #{title} "
       end
@@ -148,9 +150,9 @@ module Garden
     # has been modified since last execution
     def needed?
       if @needed.nil?
-        @needed = @force || \
-                  prerequisite_tasks.empty? || \
-                  input_files.since(@last_executed).any?
+        @needed = prerequisite_tasks.empty? || \
+                  input_files.since(@last_executed).any? || \
+                  @force
 
         # We also make sure that if the rakefile was modified since last
         # execution, we force reexecution

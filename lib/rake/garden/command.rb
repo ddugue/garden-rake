@@ -14,29 +14,21 @@ module Garden
     attr_writer :workdir        # Workdirectory for command
     attr_writer :env            # Environment variables
 
+    attr_reader :linenumber
     ##
     # Parse arguments received by the initializer
     def parse_args(args, kwargs)
       return unless self.class.Args
-      command_args = self.class.Args.new(*args, **kwargs)
+      command_args = self.class.Args.new(self, *args, **kwargs)
       command_args.validate
       command_args
-    end
-
-    ##
-    # Get the line number from which this command was invoked in the rakefile
-    def line_number
-      location = caller_locations.find do |loc|
-        loc.path.include? 'rakefile'
-      end
-      location ? location.lineno : 0
     end
 
     def initialize(*args, **kwargs)
 
       @workdir = nil
       @env = nil
-      @linenumber = line_number
+      @linenumber = self.class.line_number
 
       parse_args(args, kwargs)
     end
@@ -89,7 +81,7 @@ module Garden
     ##
     # Return the suffix of the status long info
     def status_suffix
-      time = Logger.time(self.time).to_s.blue
+      time = Logger.time(self.time).ljust(6).blue
       "[#{status_text.colorize(status_color)}] ... #{time}"
     end
 
@@ -117,6 +109,8 @@ module Garden
     end
 
     def skip?; end
+    def process; end
+
     ##
     # Return a fileset of file, assuming every file is NOT a glob
     # for glob, use +to_glob+
@@ -136,6 +130,16 @@ module Garden
       Fileset.from_glob(glob)
     end
 
-    class << self; attr_accessor :Args end
+    class << self
+      attr_accessor :Args
+      ##
+      # Get the line number from which this command was invoked in the rakefile
+      def line_number
+        location = caller_locations.find do |loc|
+          loc.path.include? 'rakefile'
+        end
+        location ? location.lineno : 0
+      end
+    end
   end
 end

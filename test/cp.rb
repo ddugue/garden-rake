@@ -1,4 +1,5 @@
 require 'rake/garden/commands/cp'
+require 'rake/garden/filepath'
 require 'rake/garden/async_manager'
 
 class FakeManager
@@ -58,4 +59,13 @@ RSpec.describe Garden::CopyCommand, "processing" do
     expect(cmd.succeeded?).to be(false)
   end
 
+  it "should be able to use a filepath" do
+    manager = FakeManager.new
+    cmd = Garden::CopyCommand.new Garden::Filepath.new("/tmp/cptest/a.txt"), "/tmp/cptest/b.txt"
+    cmd.manager = manager
+    manager.append(cmd)
+    cmd.start
+    cmd.result
+    expect(cmd.succeeded?).to be(true)
+  end
 end

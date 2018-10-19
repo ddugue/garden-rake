@@ -17,6 +17,13 @@ module Garden
       @files << (file.is_a?(String) ? Filepath.new(file) : file)
     end
 
+    # To support command args with file object, see +command_args+
+    def >>(other)
+      d = [self, other]
+      d.is_args = true
+      d
+    end
+
     ##
     # Iterate over each file and fileset that is contained inside this
     # fileset

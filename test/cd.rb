@@ -1,6 +1,7 @@
 require 'pathname'
 
 require 'rake/garden/commands/cd'
+require 'rake/garden/commands/sh'
 require 'rake/garden/async_manager'
 
 class FakeManager
@@ -41,6 +42,17 @@ RSpec.describe Garden::ChangedirectoryCommand, "processing" do
       cmd.manager = manager
       cmd.workdir = manager.workdir
       expect(manager.workdir.to_s).to eq('/tmp/')
+    end
+  end
+
+  context "with sub command" do
+    it "should set the right workdir on manager" do
+      manager = FakeManager.new
+      shcmd = Garden::ShCommand.new "touch ."
+      cmd = Garden::ChangedirectoryCommand.new "tmp", shcmd
+      cmd.manager = manager
+      cmd.workdir = manager.workdir
+      expect(shcmd.instance_variable_get(:@workdir).to_s).to eq('/tmp/')
     end
   end
 end

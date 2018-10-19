@@ -89,6 +89,13 @@ module Garden
       false
     end
 
+    # To support command args with file object, see +command_args+
+    def >>(other)
+      d = [self, other]
+      d.is_args = true
+      d
+    end
+
     # Format a string by replacing some special
     # character expression by part of the filepath
     # %f - Replace with file basename and relative directory pathy

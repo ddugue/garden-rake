@@ -16,6 +16,9 @@ RSpec.describe Garden::CommandArgs, "#initialize" do
   it "should create an arg with arrays" do
     expect(["a", "d"] >> ["b", "c"] >> "d").to eq([["a", "d"], ["b", "c"], 'd'])
   end
+  it "Should work with a filepath" do
+    expect(Garden::Filepath.new("c") >> "b").to eq(["c", 'b'])
+  end
 end
 
 RSpec.describe Garden::ShArgs do
