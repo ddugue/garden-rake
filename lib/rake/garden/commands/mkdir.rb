@@ -9,12 +9,13 @@ module Garden
       Make sure you have the right syntax for command 'mkdir'
       The acceptable forms for mkdir are the following:
       * mkdir 'folder'
+      * mkdir 'folder', :async (to execute mkdir asynchronously)
 
     SYNTAX
     INVALID_LENGTH = 'The number of arguments is invalid'
 
     def validate
-      raise ParsingError.new(self, INVALID_LENGTH) if length != 1
+      raise ParsingError.new(self, INVALID_LENGTH) if length.zero?
     end
 
     ##
@@ -26,7 +27,7 @@ module Garden
     ##
     # Return wether the mkdir is async
     def async?
-      false
+      @args.include? :async
     end
   end
 
@@ -39,14 +40,19 @@ module Garden
       "mkdir -p #{@args.folder}"
     end
 
+    ##
+    # Return output files based on the provided output files
+    def output_files
+      @output_files ||= Fileset.new()
+    end
+
     def should_skip
       File.directory?(@args.folder)
     end
 
-
     def process
       super
-      result unless @args.async?
+      # result unless @args.async?
     end
 
     def to_s

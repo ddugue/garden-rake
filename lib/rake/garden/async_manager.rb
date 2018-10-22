@@ -14,22 +14,32 @@ module Garden
 
     # Start the execution of all the sub processes
     def process
+    end
+
+    # Start executing the lifecycle
+    # +order+ is the execution order provided by the manager
+    def start(order = nil)
+      @start_time ||= Time.now
       asyncs.each_with_index { |item, index| item.start(index) }
+      self
     end
 
     # Wait for all (if +id+ == :all) async process to complete or a specific one
     # whose prcocess id is +id+ if +id+ is not equal to :all
     def wait_for(id = :all)
-      until @completed
-        @completed = true
+      start # Only start if not already started
+      completed = false
+      until completed
+        completed = true
         asyncs.each do |process|
           process.update_status
-          @completed = process.completed? & @completed if id == :all
-          @completed = process.completed? if id == process.execution_order
+          completed = process.completed? & completed if id == :all
+          completed = process.completed? if id == process.execution_order
         end
         update_status if id == :all
         sleep(0.0001)
       end
+      @completed = completed
     end
 
     # Alias for wait_for all

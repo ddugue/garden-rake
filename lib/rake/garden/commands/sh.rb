@@ -14,7 +14,6 @@ require 'rake/garden/command'
 require 'rake/garden/command_args'
 
 module Garden
-
   ##
   # Represent the Command arguments for SH
   class ShArgs < CommandArgs
@@ -46,7 +45,7 @@ module Garden
     ##
     # Return a fileset group for output files
     def output
-       @output ||= format_file(get(-1)) if length >= 3
+      @output ||= format_file(get(-1)) if length >= 3
     end
 
     ##
@@ -121,6 +120,11 @@ module Garden
       @thread&.status
     end
 
+    def readlines
+      return unless @stdout
+      @readlines ||= @stdout.readlines
+    end
+
     ##
     # Log stdout of the command
     def log_stdout(logger)
@@ -128,7 +132,7 @@ module Garden
 
       logger.debug logger.pad_for_hierarchy(@order, "Executing: #{command}")
 
-      @stdout.readlines.each do |line|
+      readlines.each do |line|
         line.strip!
         next if line.empty?
         logger.verbose(logger.pad_for_hierarchy(@order, line))
@@ -160,7 +164,7 @@ module Garden
     # Return the result of this command
     def result
       super
-      @stdout
+      readlines
     end
 
     def to_s

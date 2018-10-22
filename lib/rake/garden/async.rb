@@ -13,6 +13,8 @@ module Garden
     # Start executing the lifecycle
     # +order+ is the execution order provided by the manager
     def start(order = nil)
+      return unless @start_time.nil? # If already started we don't restart it
+
       @start_time = Time.now
       @execution_order = order
       should_skip ? on_skip : process

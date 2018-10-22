@@ -25,10 +25,11 @@ chore :booty => [true, "copy/*.txt"] do |t|
   files.each { |f| cp f >> "rec/%b.rb" }
 
   cd "dav"
-  sh "touch e.txt"
   mkdir "/tmp/testtest"
   set DEBUG: true
   sh "echo $DEBUG"
+  mkdir "/tmp/testtesttest"
+  sh "touch /tmp/testtesttest/3"
 end
 
 # chore :bam => ["copy/*.txt"] do |t|
