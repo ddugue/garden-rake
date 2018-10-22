@@ -61,8 +61,8 @@ module Garden
 
     ##
     # Unset an environment variable
-    def unset(var)
-      queue UnsetCommand.new(self, var)
+    def unset(*args, **kwargs)
+      queue UnsetCommand, args, kwargs
     end
 
     ##
@@ -87,8 +87,8 @@ module Garden
       queue StraceCommand.new(self, ShArgs.new(*args))
     end
 
-    def daemon(cmd)
-      queue DaemonCommand.new(self, cmd)
+    def daemon(*args, **kwargs)
+      queue DaemonCommand, args, kwargs
     end
   end
 end

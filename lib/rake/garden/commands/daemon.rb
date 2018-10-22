@@ -1,45 +1,78 @@
+# frozen_string_literal: true
 
+require 'rake/garden/command'
+require 'rake/garden/command_args'
+require 'rake/garden/metadata'
+
+##
+# Represent a daemon command
 module Garden
+  ##
+  # Represent the Command arguments for SH
+  class DaemonArgs < CommandArgs
+    @syntax = <<~SYNTAX
+      Make sure you have the right syntax for command 'daemon'
+      The acceptable forms for sh are the following:
+      * daemon 'command'
+
+      Where 'command' is the command to be executed
+    SYNTAX
+    INVALID_LENGTH = 'The number of arguments is invalid'
+
+    def validate
+      raise ParsingError.new(self, INVALID_LENGTH) if length.zero? || length > 1
+    end
+
+    ##
+    # Return a file aware string for the command
+    def command
+      @cmd ||= get(0)
+    end
+  end
+
   ##
   # Command that spawns a background process
   class DaemonCommand < Command
-    def initialize(cmd)
-      @cmd = cmd
-      @metadata = metadata.namespace("daemons")
-      @pid = @metadata.fetch(@cmd, nil)
-      super
+    def metadata
+      @metadata ||= JSONMetadata.metadata.namespace('daemons')
     end
 
+    ##
+    # Returns the PID of the process
+    def pid
+      @pid ||= metadata.fetch(@args.command, nil)
+    end
+
+    ##
+    # Returns wether there is already a process running for current PID
     def process_exist?
-      return false if @pid.nil?
+      return false if pid.nil?
       begin
-        Process.getpgid(@pid)
+        Process.getpgid(pid)
         true
       rescue Errno::ESRCH
         false
       end
     end
 
-    def skip?
+    ##
+    # Skip daemon spawning if the process is already running
+    def should_skip
       @skip = process_exist? if @skip.nil?
       @skip
     end
 
-    def run(order)
-      super
-      unless skip?
-        start = Time.now
-        pid = spawn(@cmd, [:out, :err] => '/dev/null')
-        Process.detach pid
-        @time = Time.now - start
-        @metadata[@cmd] = pid
-      end
+    ##
+    # Spawn and detach process linked to command
+    def process
+      pid = spawn(@args.command, %i[out err] => '/dev/null')
+      Process.detach pid
+      metadata[@args.command] = pid
     end
 
-    def log(logger, prefix = nil)
+    def log(logger)
       super
-      whitespace = ' ' * (7 + (prefix.nil? ? 0 : 3))
-      logger.debug "#{whitespace}Current PID: #{@pid}"
+      logger.debug logger.pad_for_hierarchy(@order, "Current PID: #{pid}")
     end
 
     def to_s
@@ -47,10 +80,9 @@ module Garden
     end
   end
 
-
-  task = Rake::Task.define_task("close") do
-    puts "Closing all open daemon pids"
-    pids = metadata.namespace("daemons")
+  task = Rake::Task.define_task('kill') do
+    puts 'Killing all open daemon pids'
+    pids = JSONMetadata.metadata.namespace('daemons')
     pids.each do |cmd, pid|
       puts "Closing PID #{pid} for command #{cmd}"
       begin
@@ -63,5 +95,4 @@ module Garden
     pids.save
   end
   # task.description = "Closes all opened daemon pids"
-
 end
