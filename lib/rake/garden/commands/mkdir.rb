@@ -1,9 +1,10 @@
 require 'rake/garden/commands/sh'
+require 'rake/garden/command_args'
 
 module Garden
   ##
   # Represent the args that are sent to a copy command
-  class MakeDirArgs < ShArgs
+  class MakeDirArgs < CommandArgs
     @syntax = <<~SYNTAX
       Make sure you have the right syntax for command 'mkdir'
       The acceptable forms for mkdir are the following:
@@ -21,6 +22,12 @@ module Garden
     def folder
       @folder ||= format_file(get(0))
     end
+
+    ##
+    # Return wether the mkdir is async
+    def async?
+      false
+    end
   end
 
   ##
@@ -34,6 +41,12 @@ module Garden
 
     def should_skip
       File.directory?(@args.folder)
+    end
+
+
+    def process
+      super
+      result unless @args.async?
     end
 
     def to_s

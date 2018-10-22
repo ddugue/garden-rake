@@ -1,6 +1,5 @@
 + Test async manager
 
-+ Migrate daemon
 + Switch mkdir to sync by default
 
 + Migrate STRACE
