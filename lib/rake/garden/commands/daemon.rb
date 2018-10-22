@@ -1,4 +1,5 @@
 # frozen_string_literal: true
+require 'rake'
 
 require 'rake/garden/command'
 require 'rake/garden/command_args'
@@ -33,6 +34,8 @@ module Garden
   ##
   # Command that spawns a background process
   class DaemonCommand < Command
+    @Args = DaemonArgs
+
     def metadata
       @metadata ||= JSONMetadata.metadata.namespace('daemons')
     end

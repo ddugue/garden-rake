@@ -15,3 +15,4 @@ set -e
 # rspec -f d test/cd.rb
 # rspec -f d test/mkdir.rb
 rspec -f d test/set.rb
+rspec -f d test/daemon.rb
