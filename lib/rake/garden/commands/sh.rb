@@ -39,19 +39,19 @@ module Garden
     ##
     # Return a fileset group for input files
     def input
-      @input ||= format_file(get(0)) if length >= 2
+      @input ||= format_file(get(0)) if length >= 3
     end
 
     ##
     # Return a fileset group for output files
     def output
-      @output ||= format_file(get(-1)) if length >= 3
+      @output ||= format_file(get(-1)) if length >= 2
     end
 
     ##
     # Return a file aware string for the command
     def command
-      str = length == 1 ? get(0) : get(1)
+      str = length < 3 ? get(0) : get(1)
       raise ParsingError.new(self, CMD_NOT_STRING) unless str.is_a?(String)
       @cmd ||= format_file(str)
     end

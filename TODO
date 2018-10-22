@@ -1,7 +1,5 @@
 + Test async manager
 
-+ Switch mkdir to sync by default
-
 + Migrate STRACE
 
 
