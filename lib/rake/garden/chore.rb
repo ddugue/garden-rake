@@ -8,7 +8,6 @@ require 'rake/garden/metadata'
 require 'rake/garden/logger'
 require 'rake/garden/fileset'
 require 'rake/garden/filepath'
-require 'rake/garden/noop'
 
 module Garden
   ##
@@ -66,8 +65,11 @@ module Garden
       if [true, 'true'].include? prerequisite_name
         # If true, it is simply an hack to make the chore always execute
         # even when it has dependencies
+
+        require 'rake/garden/noop_chore'
+
         @force = true
-        Noop.new @application
+        NoopChore.new @application
       elsif Filepath.is_file? prerequisite_name
         # We convert filepath into FileChores
         require 'rake/garden/file_chore'

@@ -82,7 +82,11 @@ module Garden
     ##
     # Return input files based on the provided output files
     def input_files
-      @input_files ||= to_glob(@args.input)
+      if @args.input.is_a? Filepath
+        @input_files ||= @args.input
+      else
+        @input_files ||= to_glob(@args.input)
+      end
     end
 
     ##

@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require 'rake/garden/ext/file'
 require 'rake/garden/commands/sh'
 
 module Garden
