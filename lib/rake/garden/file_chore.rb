@@ -11,7 +11,6 @@ module Garden
   class FileChore < Chore
     def initialize(task_name, app)
       @pattern = task_name
-      @silenced = true
       super task_name, app
     end
 

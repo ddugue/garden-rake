@@ -7,7 +7,6 @@ module Garden
   # Task that does nothing
   class NoopChore < Chore
     def initialize(app)
-      @silenced = true
       super 'noop', app
     end
 

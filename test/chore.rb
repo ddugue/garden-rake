@@ -33,13 +33,6 @@ describe Garden::Chore do
     it { is_expected.to have_attributes('needed?' => true) }
   end
 
-  describe "needed? when not needed" do
-    let(:arg) { { :newname_long => fs } }
-    it "should not be needed if execution time is more recent" do
-      subject.instance_variable_set(:@last_executed, Time.now + 1000)
-      expect(subject.needed?).to be(false)
-    end
-  end
 
 end
 

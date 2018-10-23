@@ -12,22 +12,10 @@ module Garden
       []
     end
 
-    # Start the execution of all the sub processes
-    def process
-    end
-
-    # Start executing the lifecycle
-    # +order+ is the execution order provided by the manager
-    def start(order = nil)
-      @start_time ||= Time.now
-      asyncs.each_with_index { |item, index| item.start(index) }
-      self
-    end
-
     # Wait for all (if +id+ == :all) async process to complete or a specific one
     # whose prcocess id is +id+ if +id+ is not equal to :all
     def wait_for(id = :all)
-      start # Only start if not already started
+      asyncs.each_with_index { |item, index| item.start(index) }
       completed = false
       until completed
         completed = true
@@ -36,15 +24,26 @@ module Garden
           completed = process.completed? & completed if id == :all
           completed = process.completed? if id == process.execution_order
         end
-        update_status if id == :all
         sleep(0.0001)
+        if id == :all
+          @completed = completed
+          update_status
+        end
       end
-      @completed = completed
     end
 
     # Alias for wait_for all
     def result
       wait_for :all
+    end
+
+    def on_complete
+      super
+      @logger.debug " Completed #{to_s}" unless @logger.nil?
+    end
+
+    def should_complete
+      @completed
     end
 
     def completed?
@@ -66,6 +65,11 @@ module Garden
     def succeeded?
       @succeeded = asyncs.none?(&:error?) if @succeeded.nil?
       @succeeded
+    end
+
+    # Returns wether there was an error in the execution
+    def error?
+      @succeeded == false || asyncs.any?(&:error?)
     end
   end
 end

@@ -48,8 +48,8 @@ module Garden
     ##
     # Return the files needed to execute this chore
     def input_files
-      @input_files ||=
-        Fileset.new(prerequisite_tasks.select { |t| t.is_a? Chore })
+      ts = prerequisite_tasks.select { |t| t.is_a? Chore }.to_a
+      @input_files ||= Fileset.new(ts)
     end
 
     ##
@@ -83,12 +83,9 @@ module Garden
     ##
     # Override execute to decorate the contex with self instance method
     def execute(args = nil)
-      args ||= EMPTY_TASK_ARGS
+      @args = args || EMPTY_TASK_ARGS
       return if application.options.dryrun
       application.enhance_with_matching_rule(name) if @actions.empty?
-
-      # Instance exec decorate the context of the lambda with self methods
-      @actions.each { |act| instance_exec(self, args, &act) }
     end
 
     ##
@@ -99,71 +96,14 @@ module Garden
       Array.new([index])
     end
 
-    ##
-    # Log some content before the execution
-    def pre_log
-      @logger.info ' '
-      if application.options.dryrun
-        @logger.important " Running Task (dry run): #{title} "
-      elsif !self.needed?
-        @logger.important " Skipping Task: #{title} " unless @already_invoked
-      else
-        @logger.important " Running Task: #{title} "
-      end
-    end
-
-    ##
-    # Log some content after the execution
-    def post_log
-      return if needed?
-      @logger.debug(" Task was last executed #{@last_executed}")
-      @logger.debug do
-        info = output_files.to_a.map { |file| [file.to_s, file.mtime] }.to_h
-        " Prerequisite tasks: #{info}"
-      end
-    end
 
     ##
     # We override the invoke command of rake to plug our own
     # logging
     def invoke_with_call_chain(*args)
-      succeeded = true
-      invoked = @already_invoked
-      pre_log unless @silenced
-
-      begin
-        super
-      rescue ParsingError => error
-        error.log(@logger)
-        succeeded = false
-      end
-
-      post_log unless @silenced || !succeeded || invoked
-
+      super
       @logger.flush
-      exit(1) unless succeeded
-
-      @metadata['last_executed'] = Time.now.to_i if needed?
-    end
-
-    ##
-    # Return wether the task need to be run
-    # We run it only if prerequisites are empty or when one of its input
-    # has been modified since last execution
-    def needed?
-      if @needed.nil?
-        @needed = prerequisite_tasks.empty? || \
-                  input_files.since(@last_executed).any? || \
-                  @force
-
-        # We also make sure that if the rakefile was modified since last
-        # execution, we force reexecution
-        if @application.rakefile
-          @needed ||= File.mtime(@application.rakefile) > @last_executed
-        end
-
-      end
-      @needed
+      exit(1) if respond_to?(:error?) && error?
     end
 
     class << self
