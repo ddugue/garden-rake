@@ -79,7 +79,7 @@ module Garden
     end
 
     def to_s
-      "Spawning process '#{@cmd}'"
+      "Spawning process '#{@args.command}'"
     end
   end
 

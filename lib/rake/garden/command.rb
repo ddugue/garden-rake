@@ -90,7 +90,7 @@ module Garden
     def status(max_size)
       prefix = status_prefix
       suffix = status_suffix
-      max_size -= (suffix.uncolorize.length + 2 + prefix.uncolorize.length)
+      max_size -= (suffix.uncolorize.length + 3 + prefix.uncolorize.length)
       cmd = "'#{Logger.truncate(to_s, max_size).colorize(status_color)}'"
 
       Logger.align(prefix, cmd, suffix)

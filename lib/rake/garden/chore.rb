@@ -21,7 +21,7 @@ module Garden
     def initialize(task_name, app)
       @metadata = JSONMetadata.metadata.namespace(task_name)
       @last_executed = Time.at(@metadata.fetch('last_executed', 0) || 0)
-      @logger = Logger.new(level: $LOGLEVEL || Logger::DEBUG)
+      @logger = Logger.new(level: $LOGLEVEL || Logger::INFO)
       @force = false # Wether to force the task to execute
       super
     end
@@ -106,7 +106,7 @@ module Garden
       if application.options.dryrun
         @logger.important " Running Task (dry run): #{title} "
       elsif !self.needed?
-        @logger.important " Skipping Task: #{title} "
+        @logger.important " Skipping Task: #{title} " unless @already_invoked
       else
         @logger.important " Running Task: #{title} "
       end
@@ -128,6 +128,7 @@ module Garden
     # logging
     def invoke_with_call_chain(*args)
       succeeded = true
+      invoked = @already_invoked
       pre_log unless @silenced
 
       begin
@@ -137,7 +138,7 @@ module Garden
         succeeded = false
       end
 
-      post_log unless @silenced || !succeeded
+      post_log unless @silenced || !succeeded || invoked
 
       @logger.flush
       exit(1) unless succeeded
@@ -172,5 +173,16 @@ module Garden
         chore
       end
     end
+  end
+
+  ##
+  # Set the log level
+  # NONE = 0      # Output only errors
+  # IMPORTANT = 1 # Output minimal information
+  # INFO = 2      # Output all executed commands
+  # VERBOSE = 3   # Output all stdout
+  # DEBUG = 4     # Output garden debug information as well
+  def setlog(level)
+    $LOGLEVEL = level
   end
 end

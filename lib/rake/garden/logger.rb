@@ -2,7 +2,6 @@
 # frozen_string_literal: true
 
 require 'colorize'
-require 'math'
 
 module Garden
   ##
@@ -151,7 +150,7 @@ module Garden
       # TODO: Add possibility of aligning right?
       def align(prefix, center, suffix)
         diff = terminal_width - 1 - (prefix + center + suffix).uncolorize.length
-        "#{prefix}#{center}#{' ' * Math.max(diff, 0)}#{suffix}"
+        "#{prefix}#{center}#{' ' * 0.coerce(diff).max}#{suffix}"
       end
 
       # Pad based on the hierarchy level, used to display information
