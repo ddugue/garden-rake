@@ -34,6 +34,7 @@ module Garden
 
     def on_complete
       super
+      @metadata['last_executed'] = Time.now.to_i unless error?
       return if @silenced
       @queue.each { |cmd| cmd.log(@logger) }
       @logger.info(Logger.line(char: '='))
@@ -83,7 +84,6 @@ module Garden
         error.log(@logger)
         @succeeded = false
       end
-      @metadata['last_executed'] = Time.now.to_i
     end
 
     def execute(args = nil)

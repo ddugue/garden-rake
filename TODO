@@ -6,16 +6,13 @@
 
 
 ############
++ Add way to make task and cmd dependant on the number of files in a directory
 + Add command mkdir, mv, ln, rm in the DSL
 + Make all relative command accept Args
-+ Consolidate command arguments passing
-+ Make set accept same syntax as cd
 + Make sync process all task that were before
-+ Make result from command work -> Test
 
 + Improve echo message
 + Add Frozen string literal everywhere
-+ On task title replace _ with space
 + When task has failed, make next run force with previous arguments
 + Need to take into account the command itself to evaluate if action must be rerun
 
