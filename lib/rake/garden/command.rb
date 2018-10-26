@@ -118,7 +118,7 @@ module Garden
       return Fileset.new if file.nil?
       return Fileset.new(file.map { |f| to_file(f) }) if file.is_a? Array
       return Filepath.new(@workdir.join(file.to_s)) if @workdir
-      Filepath.new(file)
+      Filepath.new(file.to_s)
     end
 
     ##

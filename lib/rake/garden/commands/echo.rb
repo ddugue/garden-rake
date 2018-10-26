@@ -7,7 +7,8 @@ module Garden
   ##
   # Represent the args of the echo cmmand
   class EchoArgs < CommandArgs
-    def message
+    attr_reader :message
+    def validate
       @message ||= get(0).to_s
     end
   end

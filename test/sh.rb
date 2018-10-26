@@ -1,30 +1,8 @@
 require 'rake/garden/commands/sh'
 require 'rake/garden/async_manager'
 
-class FakeManager
-  include Garden::AsyncManager
-  def initialize
-    @asyncs = []
-  end
-  def asyncs
-    @asyncs
-  end
-  def append(elem)
-    @asyncs.append(elem)
-  end
-  def wait_for(id)
-    completed = false
-    until completed
-      completed = true
-      asyncs.each do |process|
-        process.update_status
-        completed = process.completed? if id == process.execution_order
-      end
+require_relative 'fake_manager'
 
-      sleep(0.0001)
-    end
-  end
-end
 
 RSpec.describe Garden::ShCommand, "processing"do
   before :each do

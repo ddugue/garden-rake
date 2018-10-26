@@ -3,7 +3,7 @@ require 'rake/garden/commands/set'
 require 'rake/garden/commands/unset'
 require_relative 'fake_manager'
 
-RSpec.describe Garden::SetCommand, "processing" do
+RSpec.describe "Garden::SetCommand", "processing" do
   let(:manager) { FakeManager.new }
   context "only values" do
     it "should set the right env and value on manager with string" do

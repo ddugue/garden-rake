@@ -5,6 +5,8 @@ module Garden
   ##
   # Represent the args that are sent to a copy command
   class MakeDirArgs < CommandArgs
+    attr_reader :folder
+
     @syntax = <<~SYNTAX
       Make sure you have the right syntax for command 'mkdir'
       The acceptable forms for mkdir are the following:
@@ -16,11 +18,6 @@ module Garden
 
     def validate
       raise ParsingError.new(self, INVALID_LENGTH) if length.zero?
-    end
-
-    ##
-    # Return the folder to create
-    def folder
       @folder ||= format_file(get(0))
     end
 

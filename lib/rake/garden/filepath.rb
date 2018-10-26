@@ -115,7 +115,7 @@ module Garden
         when '%b' then relative_directory + basename
         when '%B' then basename
         when '%x' then ext
-        when '%d' then relative_directory.empty? ? directory : relative_directory
+        when '%d' then relative_directory
         when '%D' then directory
         when '%p' then @path
         end

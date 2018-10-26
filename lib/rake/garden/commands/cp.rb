@@ -16,22 +16,8 @@ module Garden
 
     def validate
       raise ParsingError.new(self, INVALID_LENGTH) if length != 2
-    end
-
-    ##
-    # Return a fileset group for input files
-    def input
       @input ||= format_file(get(0))
-    end
-
-    ##
-    # Return a fileset group for output files
-    def output
       @output ||= format_file(get(-1))
-    end
-
-    def command
-      nil
     end
   end
 

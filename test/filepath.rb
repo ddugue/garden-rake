@@ -76,7 +76,7 @@ RSpec.describe Garden::Filepath do
 
     describe "with %d (directory)" do
       let(:selector) { '%d' }
-      it { is_expected.to eql('/home/') }
+      it { is_expected.to eql('') }
     end
 
     describe "with %D (full directory)" do

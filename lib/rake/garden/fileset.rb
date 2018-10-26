@@ -52,7 +52,7 @@ module Garden
     # Return files that have been modified since a specific date
     def since(date = nil, &block)
       since_date = date || Context.instance.default_since || Rake::EARLY
-      fs = Fileset.new(select { |f| f.mtime > since_date })
+      fs = Fileset.new(select { |f| f.mtime && f.mtime > since_date })
       fs.each(&block) if block_given?
       fs
     end

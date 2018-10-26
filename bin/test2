@@ -1,18 +1,19 @@
 set -e
-rspec -f d test/logger.rb
-rspec -f d test/async.rb
-rspec -f d test/env_parser.rb
-rspec -f d test/options.rb
-rspec -f d test/fileset.rb
-rspec -f d test/filepath.rb
-rspec -f d test/metadata.rb
-rspec -f d test/chore.rb
-rspec -f d test/args.rb
-rspec -f d test/command.rb
-rspec -f d test/sh.rb
-rspec -f d test/echo.rb
-rspec -f d test/cp.rb
-rspec -f d test/cd.rb
-rspec -f d test/mkdir.rb
-rspec -f d test/set.rb
-rspec -f d test/daemon.rb
+rspec -f d test/*.rb
+# rspec -f d test/logger.rb
+# rspec -f d test/async.rb
+# rspec -f d test/env_parser.rb
+# rspec -f d test/options.rb
+# rspec -f d test/fileset.rb
+# rspec -f d test/filepath.rb
+# rspec -f d test/metadata.rb
+# rspec -f d test/chore.rb
+# rspec -f d test/args.rb
+# rspec -f d test/command.rb
+# rspec -f d test/sh.rb
+# rspec -f d test/echo.rb
+# rspec -f d test/cp.rb
+# rspec -f d test/cd.rb
+# rspec -f d test/mkdir.rb
+# rspec -f d test/set.rb
+# rspec -f d test/daemon.rb

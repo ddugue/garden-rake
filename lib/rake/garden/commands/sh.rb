@@ -17,6 +17,11 @@ module Garden
   ##
   # Represent the Command arguments for SH
   class ShArgs < CommandArgs
+
+    attr_reader :input
+    attr_reader :output
+    attr_reader :command
+
     @syntax = <<~SYNTAX
       Make sure you have the right syntax for command 'sh'
       The acceptable forms for sh are the following:
@@ -34,26 +39,11 @@ module Garden
 
     def validate
       raise ParsingError.new(self, INVALID_LENGTH) if length.zero? || length > 3
-    end
-
-    ##
-    # Return a fileset group for input files
-    def input
-      @input ||= format_file(get(0)) if length >= 3
-    end
-
-    ##
-    # Return a fileset group for output files
-    def output
-      @output ||= format_file(get(-1)) if length >= 2
-    end
-
-    ##
-    # Return a file aware string for the command
-    def command
       str = length < 3 ? get(0) : get(1)
       raise ParsingError.new(self, CMD_NOT_STRING) unless str.is_a?(String)
-      @cmd ||= format_file(str)
+      @command ||= format_file(str)
+      @input ||= format_file(get(0)) if length >= 3
+      @output ||= format_file(get(-1)) if length >= 2
     end
   end
 

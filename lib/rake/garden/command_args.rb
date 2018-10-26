@@ -37,8 +37,8 @@ module Garden
       * a literal array mixing glob/filenames
     FILEPATTERNS
 
-    def initialize(command, *args, **kwargs)
-      @command = command
+    def initialize(cmd, *args, **kwargs)
+      @cmd = cmd
       @args = args
       @kwargs = kwargs
     end
@@ -46,7 +46,7 @@ module Garden
     ##
     # Returns the linenumber in the rakefile where command was created
     def linenumber
-      return @command.nil? ? 0 : @command.linenumber
+      return @cmd.nil? ? 0 : @cmd.linenumber
     end
 
     ##

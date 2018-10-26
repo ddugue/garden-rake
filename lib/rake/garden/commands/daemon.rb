@@ -11,6 +11,9 @@ module Garden
   ##
   # Represent the Command arguments for SH
   class DaemonArgs < CommandArgs
+
+    attr_reader :command
+
     @syntax = <<~SYNTAX
       Make sure you have the right syntax for command 'daemon'
       The acceptable forms for sh are the following:
@@ -22,12 +25,7 @@ module Garden
 
     def validate
       raise ParsingError.new(self, INVALID_LENGTH) if length.zero? || length > 1
-    end
-
-    ##
-    # Return a file aware string for the command
-    def command
-      @cmd ||= get(0)
+      @command ||= get(0)
     end
   end
 

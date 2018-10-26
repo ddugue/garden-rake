@@ -26,6 +26,7 @@ RSpec.describe Garden::ShArgs do
   context "with all args" do
     subject { Garden::ShArgs.new(nil, ["a.txt", "%b.txt"], "cmd %f", ["c.txt"]) }
     it "should work with no context" do
+      subject.validate
       expect(subject.input).to eq(["a.txt", "%b.txt"])
       expect(subject.command).to eq("cmd %f")
       expect(subject.output).to eq(["c.txt"])
@@ -33,6 +34,7 @@ RSpec.describe Garden::ShArgs do
 
     it "should work with file context" do
       Garden::Context.instance.with_value :file, Garden::Filepath.new("c.rb") do
+        subject.validate
         expect(subject.command).to eq("cmd c.rb")
         expect(subject.output).to eq(["c.txt"])
         expect(subject.input).to eq(["a.txt", "c.txt"])

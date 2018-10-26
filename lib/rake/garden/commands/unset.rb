@@ -7,6 +7,8 @@ module Garden
   ##
   # Represent the args for the command set
   class UnsetArgs < CommandArgs
+    attr_reader :key
+
     @syntax = <<~SYNTAX
       Make sure you have the right syntax for command 'unset'
       The acceptable form for unset is the following:
@@ -16,11 +18,6 @@ module Garden
 
     def validate
       raise ParsingError.new(self, INVALID_LENGTH) if length.zero?
-    end
-
-    ##
-    # Return the key that is being set for the +value+
-    def key
       @key ||= get(0).to_s
     end
   end
