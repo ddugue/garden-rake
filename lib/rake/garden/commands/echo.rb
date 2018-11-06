@@ -9,7 +9,7 @@ module Garden
   class EchoArgs < CommandArgs
     attr_reader :message
     def validate
-      @message ||= get(0).to_s
+      @message ||= format_file(get(0))
     end
   end
 
