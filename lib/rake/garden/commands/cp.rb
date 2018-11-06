@@ -39,7 +39,7 @@ module Garden
     end
 
     def command
-      "mkdir -p #{input_files.directory} && cp #{input_files} #{output_files}"
+      "mkdir -p #{output_files.directory} && cp #{input_files} #{output_files}"
     end
 
     def to_s
