@@ -2,18 +2,19 @@
 
 + Add Sub method to filepath
 + Migrate STRACE
++ Migrate sync
 
+Task was last executed need to be date
+Check if it work with execute directly (Rake::Task function)
+Check if it work with invoke directly (Rake::Task function)
 
 
 ############
-+ Add way to make task and cmd dependant on the number of files in a directory
-+ Add command mkdir, mv, ln, rm in the DSL
++ Add command mv, ln, rm in the DSL
 + Make all relative command accept Args
 + Make sync process all task that were before
 
 + Improve echo message
-+ Add Frozen string literal everywhere
-+ When task has failed, make next run force with previous arguments
 + Need to take into account the command itself to evaluate if action must be rerun
 
 + Use LateTime and EarlyTime for time comparison

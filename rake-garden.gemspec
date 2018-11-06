@@ -10,10 +10,6 @@ Gem::Specification.new do |s|
   s.authors     = ['David Dugue']
   s.email       = 'ddugue@kumoweb.ca'
   s.files       = %x[git ls-files -z].split("\x0").reject { |f| f.match(%r{^(test|spec|features)/}) }
-  # s.files       = ["lib/rake/garden.rb", "lib/rake/garden/logger.rb",
-  #                  "lib/rake/garden/hooks.rb", "lib/rake/garden/chores.rb",
-  #                  "lib/rake/garden/strace.rb",
-  #                 ]
   s.require_paths = ["lib".freeze]
   s.homepage    = 'http://rubygems.org/gems/rake-garden'
   s.license     = 'MIT'

@@ -22,7 +22,7 @@ module Garden
       @metadata = JSONMetadata.metadata.namespace(task_name)
       @last_executed = Time.at(@metadata.fetch('last_executed', 0) || 0)
       @logger = Logger.new(level: $LOGLEVEL || Logger::INFO)
-      @force = false # Wether to force the task to execute
+      @force = app.options.build_all || false # Wether to force the task to execute
       super
     end
 
