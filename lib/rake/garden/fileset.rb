@@ -39,6 +39,12 @@ module Garden
     end
 
     ##
+    # Return a space separated string list
+    def to_s
+      to_a.join ' '
+    end
+
+    ##
     # Filter a fileset by extension
     # Returns a +Fileset+
     def ext(extension, &block)
