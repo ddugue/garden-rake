@@ -10,6 +10,7 @@ module Garden
       Make sure you have the right syntax for command 'cp'
       The acceptable forms for cp are the following:
       * cp 'from' >> 'to' (where from and to are both path)
+      * cp 'from, 'to' (where from and to are both path)
 
     SYNTAX
     INVALID_LENGTH = 'The number of arguments is invalid'

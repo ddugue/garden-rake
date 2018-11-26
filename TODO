@@ -10,22 +10,18 @@ Check if it work with invoke directly (Rake::Task function)
 
 
 ############
++ Make sure mkdir is sync
++ Make context thread dependent
+
 + Add command mv, ln, rm in the DSL
 + Make all relative command accept Args
 + Make sync process all task that were before
-
-+ Improve echo message
-+ Need to take into account the command itself to evaluate if action must be rerun
-
-+ Use LateTime and EarlyTime for time comparison
 
 + Create a Readme
 
 + Make work with dtrace
 
-+ Add a force flag
 + Add a before flag
-+ Add a method to get ALL prerequisite task output files
 + Add guards
 + Add flag to ignore error
 
