@@ -7,31 +7,40 @@ module Garden
   class SyncCommand < Command
     include CommandsDSL
 
-    def initialize(&block)
+    def initialize(*arg, **kwargs, &block)
       @block = block
       @current_file = $CURRENT_FILE.dup
       @current_root = $CURRENT_ROOT.dup
-      super()
+      super
+    end
+
+    def wait_for(id)
+      item = @queue.find { |process| process.execution_order == id }
+      return if item.nil?
+
+      completed = false
+      until completed
+        item.update_status
+        completed = item.completed?
+        sleep(0.0001)
+      end
     end
 
     ##
     # Run the commands in sync
-    def run(order)
-      start = Time.now
-      @order = order
-
-      with_file @current_root, @current_file do
-        instance_exec(self, &@block)
-      end
+    def process
+      # with_file @current_root, @current_file do
+      instance_exec(self, &@block)
+      # end
 
       index = 1
       @queue.each do |command|
-        command.run "#{@order}.#{index}"
-        sleep(0.001) while command.wait.nil?
+        command.start "#{@order}.#{index}"
+        command.result
         index += 1
       end
-      @time = Time.now - start
     end
+
 
     def to_s
       'Running following commands synchronously:'
@@ -41,7 +50,7 @@ module Garden
     # Log command result
     def log(logger)
       super
-      @queue.each { |cmd| cmd.log(logger, @order) }
+      @queue.each { |cmd| cmd.log(logger) }
     end
 
     ##
@@ -50,13 +59,8 @@ module Garden
       @queue.any?(&:error?)
     end
 
-    ##
-    # Return the affected file of this command
     def output_files
-      @output_files ||= @queue \
-                        .map(&:output_files) \
-                        .reject(&:nil?) \
-                        .reduce(FileSet.new, :+)
+      @output_files ||= Fileset.new(@queue)
     end
 
     ##

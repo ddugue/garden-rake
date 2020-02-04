@@ -95,7 +95,7 @@ module Garden
     ##
     # Run a block in sync mode
     def sync(&block)
-      queue SyncCommand.new(&block)
+      queue SyncCommand, [], {}, &block
     end
 
     class << self

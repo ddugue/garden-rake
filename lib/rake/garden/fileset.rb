@@ -74,7 +74,7 @@ module Garden
 
         Context.instance.with_value :directory_root, directory_root do
           (Dir.glob glob).sort.each do |path|
-            fileset << path
+            fileset << path if File.file?(path)
           end
         end
         fileset
